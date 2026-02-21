@@ -12,7 +12,7 @@ interface GameBoardProps {
   isComplete: boolean;
   onCellPointerDown: (row: number, col: number, e: React.PointerEvent) => void;
   onCellPointerMove: (row: number, col: number) => void;
-  onCellPointerUp: (row: number, col: number) => void;
+  onCellPointerUp: (row: number, col: number, e: React.PointerEvent) => void;
   onRectClick: (index: number) => void;
   cellSize: number;
   showDragCounter: boolean;
@@ -85,7 +85,7 @@ export default function GameBoard({
       }}
       onPointerUp={(e) => {
         const cell = getCellFromEvent(e);
-        if (cell) onCellPointerUp(cell.row, cell.col);
+        if (cell) onCellPointerUp(cell.row, cell.col, e);
       }}
     >
       {/* Layer 1: Background */}

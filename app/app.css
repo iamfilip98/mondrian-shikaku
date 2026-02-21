@@ -167,6 +167,13 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* ── Game board container — prevent browser gestures ── */
+.game-board-container {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* ── Selection styling ── */
 ::selection {
   background-color: var(--color-yellow);
