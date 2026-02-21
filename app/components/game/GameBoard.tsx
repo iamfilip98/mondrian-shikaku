@@ -224,6 +224,9 @@ export default function GameBoard({
           y={clue.row * cellSize + cellSize / 2}
           textAnchor="middle"
           dominantBaseline="central"
+          stroke="var(--color-grid-bg)"
+          strokeWidth={4}
+          paintOrder="stroke"
           style={{
             fontFamily: 'var(--font-body)',
             fontWeight: 700,
