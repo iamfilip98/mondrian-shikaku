@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { generatePuzzle } from '~/lib/puzzle/generator';
 import { DIFFICULTY_CONFIGS, type Difficulty } from '~/lib/puzzle/types';
-import { seededRandInt, mulberry32 } from '~/lib/puzzle/prng';
 import GamePage from '~/components/game/GamePage';
 
 export function meta() {
@@ -11,14 +10,13 @@ export function meta() {
     {
       name: 'description',
       content:
-        'Practice Shikaku puzzles at any difficulty. From Primer to Nightmare. No registration required.',
+        'Practice Shikaku puzzles at any difficulty. From Easy to Nightmare. No registration required.',
     },
     { property: 'og:title', content: 'Free Play — Mondrian Shikaku' },
   ];
 }
 
 const difficulties: Difficulty[] = [
-  'primer',
   'easy',
   'medium',
   'hard',
@@ -26,8 +24,7 @@ const difficulties: Difficulty[] = [
   'nightmare',
 ];
 
-const accentColors: Record<Difficulty, string> = {
-  primer: 'var(--color-surface-2)',
+const accentColors: Record<string, string> = {
   easy: 'var(--color-yellow)',
   medium: 'var(--color-blue)',
   hard: 'var(--color-red)',
@@ -36,8 +33,7 @@ const accentColors: Record<Difficulty, string> = {
 };
 
 // Asymmetric grid layout for Mondrian feel
-const gridAreas: Record<Difficulty, string> = {
-  primer: 'col-span-1 row-span-1',
+const gridAreas: Record<string, string> = {
   easy: 'col-span-1 row-span-1',
   medium: 'col-span-1 row-span-1',
   hard: 'col-span-1 row-span-2',
@@ -54,12 +50,9 @@ export default function Play() {
   const puzzle = useMemo(() => {
     if (!selected) return null;
     const config = DIFFICULTY_CONFIGS[selected];
-    const rng = mulberry32(puzzleSeed);
-    const width = seededRandInt(config.minGrid, config.maxGrid, rng);
-    const height = seededRandInt(config.minGrid, config.maxGrid, rng);
     return generatePuzzle({
-      width,
-      height,
+      width: config.maxGrid,
+      height: config.maxGrid,
       difficulty: selected,
       seed: puzzleSeed,
     });
@@ -160,7 +153,7 @@ export default function Play() {
               style={{
                 backgroundColor: accentColors[diff],
                 color:
-                  diff === 'easy' || diff === 'primer'
+                  diff === 'easy'
                     ? 'var(--color-black)'
                     : 'var(--color-white)',
               }}
@@ -186,7 +179,7 @@ export default function Play() {
                     opacity: 0.8,
                   }}
                 >
-                  {config.minGrid}×{config.minGrid} – {config.maxGrid}×{config.maxGrid}
+                  {config.maxGrid}×{config.maxGrid}
                 </span>
               </div>
               <span
