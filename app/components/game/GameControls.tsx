@@ -136,16 +136,7 @@ export default function GameControls({
         disabled={hintsRemaining <= 0}
         aria-label={`Use hint. ${hintsRemaining} remaining`}
       >
-        <span>Hint</span>
-        <span
-          style={{
-            width: '4ch',
-            textAlign: 'center',
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          ({hintsRemaining})
-        </span>
+        Hint ({hintsRemaining})
       </motion.button>
 
       {/* Clear */}
