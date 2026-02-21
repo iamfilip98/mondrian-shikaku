@@ -10,7 +10,6 @@ interface SettingsDrawerProps {
   onSoundChange: (value: boolean) => void;
   showTimer: boolean;
   onShowTimerChange: (value: boolean) => void;
-  unlockedColors: string[];
 }
 
 function Toggle({
@@ -68,7 +67,6 @@ export default function SettingsDrawer({
   onSoundChange,
   showTimer,
   onShowTimerChange,
-  unlockedColors,
 }: SettingsDrawerProps) {
   const { theme, setTheme } = useTheme();
 
@@ -201,41 +199,6 @@ export default function SettingsDrawer({
                 />
               </div>
 
-              {/* Unlocked colours */}
-              <div className="mt-6 border-t border-[var(--color-border-muted)] pt-4">
-                <span
-                  className="block mb-2"
-                  style={{
-                    fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--text-xs)',
-                    fontWeight: 500,
-                    color: 'var(--color-text-muted)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                  }}
-                >
-                  Unlocked Colours
-                </span>
-                <div className="flex gap-2">
-                  {['var(--color-red)', 'var(--color-yellow)', 'var(--color-blue)'].map(
-                    (color, i) => {
-                      const isUnlocked = unlockedColors.includes(color);
-                      return (
-                        <div
-                          key={color}
-                          style={{
-                            width: '32px',
-                            height: '32px',
-                            backgroundColor: isUnlocked ? color : 'var(--color-surface-2)',
-                            border: '2px solid var(--color-border)',
-                            opacity: isUnlocked ? 1 : 0.3,
-                          }}
-                        />
-                      );
-                    }
-                  )}
-                </div>
-              </div>
             </div>
           </motion.div>
         </>

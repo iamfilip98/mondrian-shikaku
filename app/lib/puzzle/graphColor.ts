@@ -86,18 +86,12 @@ export function assignColors(
   return colorMap;
 }
 
-export function getUnlockedColors(puzzlesCompleted: number): string[] {
-  const colors = [MONDRIAN_COLORS[0]]; // Red always unlocked
-  if (puzzlesCompleted >= 5) colors.push(MONDRIAN_COLORS[1]); // Yellow at 5
-  if (puzzlesCompleted >= 15) colors.push(MONDRIAN_COLORS[2]); // Blue at 15
-  return colors;
+export function getUnlockedColors(): string[] {
+  return [...MONDRIAN_COLORS];
 }
 
-export function getUnlockedHexColors(puzzlesCompleted: number): string[] {
-  const colors = [MONDRIAN_HEX[0]];
-  if (puzzlesCompleted >= 5) colors.push(MONDRIAN_HEX[1]);
-  if (puzzlesCompleted >= 15) colors.push(MONDRIAN_HEX[2]);
-  return colors;
+export function getUnlockedHexColors(): string[] {
+  return [...MONDRIAN_HEX];
 }
 
 export { MONDRIAN_COLORS, MONDRIAN_HEX };

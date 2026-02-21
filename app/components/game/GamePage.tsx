@@ -280,7 +280,7 @@ export default function GamePage({
   return (
     <div className="flex flex-col items-center gap-4 py-4 px-4">
       {/* Controls */}
-      <div style={{ width: Math.min(svgWidth, 600) }} className="w-full max-w-[600px]">
+      <div style={{ width: svgWidth }}>
         <GameControls
           canUndo={gameState.canUndo}
           canRedo={gameState.canRedo}
@@ -324,7 +324,6 @@ export default function GamePage({
         onSoundChange={sound.toggleSound}
         showTimer={gameState.showTimer}
         onShowTimerChange={gameState.setShowTimer}
-        unlockedColors={gameState.unlockedColors}
       />
 
       {/* Win modal */}

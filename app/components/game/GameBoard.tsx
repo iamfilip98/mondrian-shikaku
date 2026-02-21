@@ -129,6 +129,8 @@ export default function GameBoard({
             width={rect.width * cellSize - 2}
             height={rect.height * cellSize - 2}
             fill={rect.color}
+            stroke="var(--color-border)"
+            strokeWidth={2}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}

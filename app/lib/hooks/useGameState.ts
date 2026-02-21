@@ -90,13 +90,8 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [showTimer, setShowTimer] = useState(true);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const puzzlesCompleted = useRef(
-    typeof window !== 'undefined'
-      ? parseInt(localStorage.getItem('puzzlesCompleted') || '0', 10)
-      : 0
-  );
 
-  const unlockedColors = getUnlockedColors(puzzlesCompleted.current);
+  const unlockedColors = getUnlockedColors();
 
   // Timer
   useEffect(() => {
