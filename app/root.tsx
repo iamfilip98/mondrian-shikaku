@@ -1,0 +1,120 @@
+import {
+  isRouteErrorResponse,
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+} from 'react-router';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useLocation } from 'react-router';
+import type { Route } from './+types/root';
+import { ThemeContext, useThemeProvider } from '~/lib/hooks/useTheme';
+import Nav from '~/components/ui/Nav';
+import './app.css';
+
+const initThemeScript = `(function(){
+  var s = localStorage.getItem('theme');
+  var m = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.setAttribute('data-theme', s === 'light' || s === 'dark' ? s : (m ? 'dark' : 'light'));
+})();`;
+
+export const links: Route.LinksFunction = () => [
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
+  {
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
+    crossOrigin: 'anonymous',
+  },
+  {
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Outfit:wght@300;400;500;700&display=swap',
+  },
+];
+
+export function Layout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script dangerouslySetInnerHTML={{ __html: initThemeScript }} />
+        <Meta />
+        <Links />
+      </head>
+      <body>
+        {children}
+        <ScrollRestoration />
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
+export default function App() {
+  const themeValue = useThemeProvider();
+  const location = useLocation();
+
+  return (
+    <ThemeContext.Provider value={themeValue}>
+      <Nav />
+      <AnimatePresence mode="wait">
+        <motion.main
+          key={location.pathname}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+        >
+          <Outlet />
+        </motion.main>
+      </AnimatePresence>
+    </ThemeContext.Provider>
+  );
+}
+
+export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  let message = 'Oops!';
+  let details = 'An unexpected error occurred.';
+  let stack: string | undefined;
+
+  if (isRouteErrorResponse(error)) {
+    message = error.status === 404 ? '404' : 'Error';
+    details =
+      error.status === 404
+        ? 'The requested page could not be found.'
+        : error.statusText || details;
+  } else if (import.meta.env.DEV && error && error instanceof Error) {
+    details = error.message;
+    stack = error.stack;
+  }
+
+  return (
+    <main className="flex flex-col items-center justify-center min-h-screen px-4">
+      <h1
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'var(--text-5xl)',
+          color: 'var(--color-text)',
+        }}
+      >
+        {message}
+      </h1>
+      <p
+        className="mt-4"
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-lg)',
+          color: 'var(--color-text-muted)',
+        }}
+      >
+        {details}
+      </p>
+      {stack && (
+        <pre className="mt-8 w-full max-w-2xl p-4 overflow-x-auto bg-[var(--color-surface)] border-2 border-[var(--color-border)]">
+          <code style={{ fontSize: 'var(--text-xs)' }}>{stack}</code>
+        </pre>
+      )}
+    </main>
+  );
+}

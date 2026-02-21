@@ -1,0 +1,237 @@
+import { useRef, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import type { Puzzle } from '~/lib/puzzle/types';
+import type { PlacedRect } from '~/lib/hooks/useGameState';
+import type { GridRect } from '~/lib/puzzle/types';
+
+interface GameBoardProps {
+  puzzle: Puzzle;
+  placed: PlacedRect[];
+  startCell: { row: number; col: number } | null;
+  previewRect: GridRect | null;
+  isComplete: boolean;
+  onCellPointerDown: (row: number, col: number, e: React.PointerEvent) => void;
+  onCellPointerMove: (row: number, col: number) => void;
+  onCellPointerUp: (row: number, col: number) => void;
+  onRectClick: (index: number) => void;
+  cellSize: number;
+}
+
+export default function GameBoard({
+  puzzle,
+  placed,
+  startCell,
+  previewRect,
+  isComplete,
+  onCellPointerDown,
+  onCellPointerMove,
+  onCellPointerUp,
+  onRectClick,
+  cellSize,
+}: GameBoardProps) {
+  const svgRef = useRef<SVGSVGElement>(null);
+  const svgWidth = cellSize * puzzle.width;
+  const svgHeight = cellSize * puzzle.height;
+
+  // Build a map of which cells are covered
+  const coverageMap = useMemo(() => {
+    const map = new Map<string, number>();
+    placed.forEach((rect, idx) => {
+      for (let r = rect.row; r < rect.row + rect.height; r++) {
+        for (let c = rect.col; c < rect.col + rect.width; c++) {
+          map.set(`${r}-${c}`, idx);
+        }
+      }
+    });
+    return map;
+  }, [placed]);
+
+  const getCellFromEvent = useCallback(
+    (e: React.PointerEvent<SVGSVGElement>) => {
+      const svg = svgRef.current;
+      if (!svg) return null;
+      const rect = svg.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const col = Math.floor(x / cellSize);
+      const row = Math.floor(y / cellSize);
+      if (row < 0 || row >= puzzle.height || col < 0 || col >= puzzle.width)
+        return null;
+      return { row, col };
+    },
+    [cellSize, puzzle.width, puzzle.height]
+  );
+
+  return (
+    <svg
+      ref={svgRef}
+      width={svgWidth}
+      height={svgHeight}
+      viewBox={`0 0 ${svgWidth} ${svgHeight}`}
+      style={{
+        display: 'block',
+        touchAction: 'none',
+        userSelect: 'none',
+      }}
+      onPointerDown={(e) => {
+        const cell = getCellFromEvent(e);
+        if (cell) onCellPointerDown(cell.row, cell.col, e);
+      }}
+      onPointerMove={(e) => {
+        const cell = getCellFromEvent(e);
+        if (cell) onCellPointerMove(cell.row, cell.col);
+      }}
+      onPointerUp={(e) => {
+        const cell = getCellFromEvent(e);
+        if (cell) onCellPointerUp(cell.row, cell.col);
+      }}
+    >
+      {/* Layer 1: Background */}
+      <rect
+        x={0}
+        y={0}
+        width={svgWidth}
+        height={svgHeight}
+        fill="var(--color-grid-bg)"
+      />
+
+      {/* Ambient breathing for unplaced cells */}
+      {!isComplete &&
+        Array.from({ length: puzzle.height }, (_, r) =>
+          Array.from({ length: puzzle.width }, (_, c) => {
+            if (coverageMap.has(`${r}-${c}`)) return null;
+            const delay = Math.sin(r * 0.7 + c * 0.5) * 2000;
+            return (
+              <rect
+                key={`breathe-${r}-${c}`}
+                x={c * cellSize}
+                y={r * cellSize}
+                width={cellSize}
+                height={cellSize}
+                fill="var(--color-grid-bg)"
+                className="grid-breathe"
+                style={{
+                  animation: `grid-breathe var(--dur-ambient) ease-in-out infinite`,
+                  animationDelay: `${delay}ms`,
+                }}
+              />
+            );
+          })
+        )}
+
+      {/* Layer 2: Placed rectangles */}
+      <AnimatePresence>
+        {placed.map((rect, idx) => (
+          <motion.rect
+            key={`placed-${idx}-${rect.row}-${rect.col}`}
+            x={rect.col * cellSize + 1}
+            y={rect.row * cellSize + 1}
+            width={rect.width * cellSize - 2}
+            height={rect.height * cellSize - 2}
+            fill={rect.color}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.1 }}
+            style={{ cursor: 'pointer' }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onRectClick(idx);
+            }}
+          />
+        ))}
+      </AnimatePresence>
+
+      {/* Layer 3: Preview rectangle */}
+      {previewRect && (
+        <rect
+          x={previewRect.col * cellSize + 1}
+          y={previewRect.row * cellSize + 1}
+          width={previewRect.width * cellSize - 2}
+          height={previewRect.height * cellSize - 2}
+          fill="var(--color-preview)"
+          stroke="var(--color-blue)"
+          strokeWidth={2}
+          pointerEvents="none"
+        />
+      )}
+
+      {/* Layer 4: Grid lines */}
+      {Array.from({ length: puzzle.height + 1 }, (_, i) => (
+        <line
+          key={`h-${i}`}
+          x1={0}
+          y1={i * cellSize}
+          x2={svgWidth}
+          y2={i * cellSize}
+          stroke="var(--color-grid-line)"
+          strokeWidth={1.5}
+        />
+      ))}
+      {Array.from({ length: puzzle.width + 1 }, (_, i) => (
+        <line
+          key={`v-${i}`}
+          x1={i * cellSize}
+          y1={0}
+          x2={i * cellSize}
+          y2={svgHeight}
+          stroke="var(--color-grid-line)"
+          strokeWidth={1.5}
+        />
+      ))}
+
+      {/* Layer 5: Outer border */}
+      <rect
+        x={0}
+        y={0}
+        width={svgWidth}
+        height={svgHeight}
+        fill="none"
+        stroke="var(--color-grid-border)"
+        strokeWidth={4}
+      />
+
+      {/* Layer 6: Clue numbers */}
+      {puzzle.clues.map((clue, i) => (
+        <text
+          key={`clue-${i}`}
+          x={clue.col * cellSize + cellSize / 2}
+          y={clue.row * cellSize + cellSize / 2}
+          textAnchor="middle"
+          dominantBaseline="central"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontWeight: 700,
+            fontSize: `clamp(10px, ${cellSize * 0.42}px, 22px)`,
+            fontVariantNumeric: 'tabular-nums',
+            fill: 'var(--color-text)',
+            pointerEvents: 'none',
+            userSelect: 'none',
+          }}
+        >
+          {clue.value}
+        </text>
+      ))}
+
+      {/* Layer 7: Start cell highlight (tap mode) */}
+      {startCell && (
+        <motion.rect
+          x={startCell.col * cellSize + 1}
+          y={startCell.row * cellSize + 1}
+          width={cellSize - 2}
+          height={cellSize - 2}
+          fill="var(--color-select)"
+          pointerEvents="none"
+          animate={{
+            opacity: [0, 0.35, 0, 0.35, 0, 0.35, 0],
+          }}
+          transition={{
+            duration: 0.9,
+            repeat: Infinity,
+            repeatDelay: 0.3,
+          }}
+        />
+      )}
+    </svg>
+  );
+}
