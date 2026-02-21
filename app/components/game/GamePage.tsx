@@ -35,6 +35,7 @@ export default function GamePage({
   const [introComplete, setIntroComplete] = useState(
     typeof window !== 'undefined' && sessionStorage.getItem('introPlayed') === '1'
   );
+  const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
   const [showWinModal, setShowWinModal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
@@ -252,7 +253,7 @@ export default function GamePage({
   const boardContent = (
     <div className="relative" style={{ width: svgWidth, height: svgHeight }}>
       {!introComplete && (
-        <IntroAnimation onComplete={() => setIntroComplete(true)} />
+        <IntroAnimation onComplete={handleIntroComplete} />
       )}
       <GameBoard
         puzzle={puzzle}
