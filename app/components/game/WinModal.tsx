@@ -53,11 +53,10 @@ export default function WinModal({
               top: '50%',
               left: '50%',
               width: 'min(420px, 90vw)',
-              transform: 'translate(-50%, -50%)',
             }}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.96 }}
+            initial={{ opacity: 0, scale: 0.96, x: '-50%', y: '-50%' }}
+            animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
+            exit={{ opacity: 0, scale: 0.96, x: '-50%', y: '-50%' }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
           >
             {/* Header accent */}
