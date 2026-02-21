@@ -15,6 +15,7 @@ interface GameBoardProps {
   onCellPointerUp: (row: number, col: number) => void;
   onRectClick: (index: number) => void;
   cellSize: number;
+  showDragCounter: boolean;
 }
 
 export default function GameBoard({
@@ -28,6 +29,7 @@ export default function GameBoard({
   onCellPointerUp,
   onRectClick,
   cellSize,
+  showDragCounter,
 }: GameBoardProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const svgWidth = cellSize * puzzle.width;
@@ -130,7 +132,7 @@ export default function GameBoard({
             height={rect.height * cellSize - 2}
             fill={rect.color}
             stroke="var(--color-border)"
-            strokeWidth={2}
+            strokeWidth={3.5}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -146,16 +148,37 @@ export default function GameBoard({
 
       {/* Layer 3: Preview rectangle */}
       {previewRect && (
-        <rect
-          x={previewRect.col * cellSize + 1}
-          y={previewRect.row * cellSize + 1}
-          width={previewRect.width * cellSize - 2}
-          height={previewRect.height * cellSize - 2}
-          fill="var(--color-preview)"
-          stroke="var(--color-blue)"
-          strokeWidth={2}
-          pointerEvents="none"
-        />
+        <>
+          <rect
+            x={previewRect.col * cellSize + 1}
+            y={previewRect.row * cellSize + 1}
+            width={previewRect.width * cellSize - 2}
+            height={previewRect.height * cellSize - 2}
+            fill="var(--color-preview)"
+            stroke="var(--color-blue)"
+            strokeWidth={2}
+            pointerEvents="none"
+          />
+          {showDragCounter && (
+            <text
+              x={previewRect.col * cellSize + (previewRect.width * cellSize) / 2}
+              y={previewRect.row * cellSize + (previewRect.height * cellSize) / 2}
+              textAnchor="middle"
+              dominantBaseline="central"
+              pointerEvents="none"
+              style={{
+                fontFamily: 'var(--font-display)',
+                fontWeight: 700,
+                fontSize: `clamp(14px, ${cellSize * 0.5}px, 28px)`,
+                fill: 'var(--color-blue)',
+                opacity: 0.8,
+                userSelect: 'none',
+              }}
+            >
+              {previewRect.width * previewRect.height}
+            </text>
+          )}
+        </>
       )}
 
       {/* Layer 4: Grid lines */}

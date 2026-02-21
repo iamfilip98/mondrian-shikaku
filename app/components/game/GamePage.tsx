@@ -28,6 +28,10 @@ export default function GamePage({
     if (typeof window === 'undefined') return false;
     return localStorage.getItem('blindMode') === 'true';
   });
+  const [showDragCounter, setShowDragCounter] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    return localStorage.getItem('showDragCounter') !== 'false';
+  });
 
   const gameState = useGameState(puzzle, blindMode);
   const sound = useSound();
@@ -266,6 +270,7 @@ export default function GamePage({
         onCellPointerUp={handleCellPointerUp}
         onRectClick={handleRectClick}
         cellSize={cellSize}
+        showDragCounter={showDragCounter}
       />
       <WinConfetti
         width={svgWidth}
@@ -324,6 +329,11 @@ export default function GamePage({
         onSoundChange={sound.toggleSound}
         showTimer={gameState.showTimer}
         onShowTimerChange={gameState.setShowTimer}
+        showDragCounter={showDragCounter}
+        onShowDragCounterChange={(v) => {
+          setShowDragCounter(v);
+          localStorage.setItem('showDragCounter', String(v));
+        }}
       />
 
       {/* Win modal */}

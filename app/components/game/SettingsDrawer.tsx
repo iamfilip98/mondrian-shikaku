@@ -10,6 +10,8 @@ interface SettingsDrawerProps {
   onSoundChange: (value: boolean) => void;
   showTimer: boolean;
   onShowTimerChange: (value: boolean) => void;
+  showDragCounter: boolean;
+  onShowDragCounterChange: (value: boolean) => void;
 }
 
 function Toggle({
@@ -67,6 +69,8 @@ export default function SettingsDrawer({
   onSoundChange,
   showTimer,
   onShowTimerChange,
+  showDragCounter,
+  onShowDragCounterChange,
 }: SettingsDrawerProps) {
   const { theme, setTheme } = useTheme();
 
@@ -196,6 +200,11 @@ export default function SettingsDrawer({
                   value={showTimer}
                   onChange={onShowTimerChange}
                   label="Show timer"
+                />
+                <Toggle
+                  value={showDragCounter}
+                  onChange={onShowDragCounterChange}
+                  label="Show drag counter"
                 />
               </div>
 
