@@ -151,6 +151,7 @@ export default function GamePage({
         blindModeOn: blindMode,
       };
 
+      let lastError = '';
       const delays = [0, 1000, 2000];
       for (let attempt = 0; attempt < delays.length; attempt++) {
         if (attempt > 0) await new Promise((r) => setTimeout(r, delays[attempt]));
@@ -173,11 +174,16 @@ export default function GamePage({
             await refreshProfile();
             return;
           }
+
+          // Don't retry 4xx errors — they won't succeed on retry
+          const errBody = await res.json().catch(() => ({}));
+          lastError = errBody.error || `${res.status}`;
+          if (res.status >= 400 && res.status < 500) break;
         } catch {
-          // retry
+          lastError = 'Network error';
         }
       }
-      addToast('Could not save your solve. Please try again later.', 'error');
+      addToast(`Could not save solve: ${lastError}`, 'error');
       solveSubmittedRef.current = false;
     })();
   }, [gameState.isComplete, user, puzzleSeed, puzzleType, difficulty, puzzle.width, puzzle.height, gameState.elapsedSeconds, gameState.hintsUsed, blindMode, refreshProfile, getToken, addToast]);
