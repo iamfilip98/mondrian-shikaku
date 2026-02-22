@@ -10,60 +10,59 @@ interface Region {
   height: number;
 }
 
-function maxArea(difficulty: Difficulty): number {
-  return DIFFICULTY_CONFIGS[difficulty].maxArea;
-}
-
-function splitProbability(difficulty: Difficulty): number {
-  switch (difficulty) {
-    case 'primer':
-      return 0.3;
-    case 'easy':
-      return 0.35;
-    case 'medium':
-      return 0.4;
-    case 'hard':
-      return 0.45;
-    case 'expert':
-      return 0.5;
-    case 'nightmare':
-      return 0.55;
-  }
-}
-
 function partition(
   region: Region,
   difficulty: Difficulty,
   rng: () => number
 ): GridRect[] {
+  const config = DIFFICULTY_CONFIGS[difficulty];
   const area = region.width * region.height;
 
-  // Base case: region is small enough and random says stop
-  if (area <= maxArea(difficulty) && area >= 2 && rng() > splitProbability(difficulty)) {
+  // Base case: region meets minArea and is within maxArea — random chance to stop splitting
+  if (area <= config.maxArea && area >= config.minArea && rng() > config.splitProbability) {
     return [region];
   }
 
-  // If area is 2 or 3, can't split without creating area=1
-  if (area <= 3) {
+  // Can't split if it would create sub-minArea regions
+  if (area < config.minArea * 2) {
     return [region];
   }
 
-  // Choose axis: split along longer dimension
-  const splitVertical =
-    region.width > region.height
-      ? true
-      : region.width < region.height
-        ? false
-        : rng() > 0.5;
+  // Elongated bias: carve a 1-wide strip from the edge instead of binary split
+  if (config.elongatedBias > 0 && rng() < config.elongatedBias) {
+    const stripResult = tryElongatedStrip(region, config.minArea, rng);
+    if (stripResult) {
+      const [strip, remainder] = stripResult;
+      return [strip, ...partition(remainder, difficulty, rng)];
+    }
+  }
+
+  // Choose axis: 80% longer dimension, 20% shorter (creates elongated children)
+  let splitVertical: boolean;
+  if (region.width === region.height) {
+    splitVertical = rng() > 0.5;
+  } else {
+    const preferLonger = region.width > region.height;
+    splitVertical = rng() < 0.8 ? preferLonger : !preferLonger;
+  }
 
   const length = splitVertical ? region.width : region.height;
 
-  // Try splitting with bias toward center
+  // Multi-strategy split position
   for (let attempt = 0; attempt < 5; attempt++) {
-    const splitPos =
-      attempt === 0
-        ? Math.floor(length * (0.35 + rng() * 0.3))
-        : Math.floor(length * (0.2 + rng() * 0.6));
+    let splitPos: number;
+    const roll = rng();
+
+    if (roll < 0.15) {
+      // Edge-biased: position 1 or length-1
+      splitPos = rng() < 0.5 ? 1 : length - 1;
+    } else if (roll < 0.40) {
+      // Wide range: 10–90%
+      splitPos = Math.floor(length * (0.1 + rng() * 0.8));
+    } else {
+      // Center-biased: 30–70%
+      splitPos = Math.floor(length * (0.3 + rng() * 0.4));
+    }
 
     if (splitPos < 1 || splitPos >= length) continue;
 
@@ -88,16 +87,62 @@ function partition(
       };
     }
 
-    // HARD CONSTRAINT: no 1×1 regions
-    if (half1.width * half1.height < 2 || half2.width * half2.height < 2) {
+    // HARD CONSTRAINT: no regions below minArea (and absolute minimum of 2)
+    const minAllowed = Math.max(config.minArea, 2);
+    if (half1.width * half1.height < minAllowed || half2.width * half2.height < minAllowed) {
       continue;
     }
 
     return [...partition(half1, difficulty, rng), ...partition(half2, difficulty, rng)];
   }
 
-  // Failed to split — return region as-is (guaranteed area >= 2 from earlier check)
+  // Failed to split — return region as-is
   return [region];
+}
+
+function tryElongatedStrip(
+  region: Region,
+  minArea: number,
+  rng: () => number
+): [Region, Region] | null {
+  // Try to carve a 1-wide strip from a random edge
+  const candidates: [Region, Region][] = [];
+  const minAllowed = Math.max(minArea, 2);
+
+  // Top strip (1 x width)
+  if (region.width >= minAllowed && (region.height - 1) * region.width >= minAllowed) {
+    candidates.push([
+      { row: region.row, col: region.col, width: region.width, height: 1 },
+      { row: region.row + 1, col: region.col, width: region.width, height: region.height - 1 },
+    ]);
+  }
+
+  // Bottom strip
+  if (region.width >= minAllowed && (region.height - 1) * region.width >= minAllowed) {
+    candidates.push([
+      { row: region.row + region.height - 1, col: region.col, width: region.width, height: 1 },
+      { row: region.row, col: region.col, width: region.width, height: region.height - 1 },
+    ]);
+  }
+
+  // Left strip (height x 1)
+  if (region.height >= minAllowed && region.height * (region.width - 1) >= minAllowed) {
+    candidates.push([
+      { row: region.row, col: region.col, width: 1, height: region.height },
+      { row: region.row, col: region.col + 1, width: region.width - 1, height: region.height },
+    ]);
+  }
+
+  // Right strip
+  if (region.height >= minAllowed && region.height * (region.width - 1) >= minAllowed) {
+    candidates.push([
+      { row: region.row, col: region.col + region.width - 1, width: 1, height: region.height },
+      { row: region.row, col: region.col, width: region.width - 1, height: region.height },
+    ]);
+  }
+
+  if (candidates.length === 0) return null;
+  return candidates[Math.floor(rng() * candidates.length)];
 }
 
 function placeClues(rects: GridRect[], rng: () => number): Clue[] {
