@@ -88,7 +88,16 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
   const [isComplete, setIsComplete] = useState(false);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [showTimer, setShowTimer] = useState(true);
+  const [showTimer, setShowTimerState] = useState(() => {
+    try {
+      const stored = localStorage.getItem('showTimer');
+      return stored !== null ? stored !== 'false' : true;
+    } catch { return true; }
+  });
+  const setShowTimer = useCallback((value: boolean) => {
+    setShowTimerState(value);
+    try { localStorage.setItem('showTimer', String(value)); } catch {}
+  }, []);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const unlockedColors = getUnlockedColors();

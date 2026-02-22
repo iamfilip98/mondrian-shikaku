@@ -14,14 +14,14 @@ export function useSound() {
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem('sound');
+      const stored = localStorage.getItem('soundEnabled');
       if (stored !== null) setEnabled(stored === 'true');
     } catch {}
   }, []);
 
   const toggleSound = useCallback((value: boolean) => {
     setEnabled(value);
-    try { localStorage.setItem('sound', String(value)); } catch {}
+    try { localStorage.setItem('soundEnabled', String(value)); } catch {}
   }, []);
 
   const playThunk = useCallback(() => {

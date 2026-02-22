@@ -45,12 +45,10 @@ export function useSettingsSync() {
   useEffect(() => {
     if (!user) return;
 
+    const syncKeys = ['theme', 'blindMode', 'soundEnabled', 'showTimer'];
     let timer: ReturnType<typeof setTimeout>;
 
-    const handleStorage = (e: StorageEvent) => {
-      const syncKeys = ['theme', 'blindMode', 'soundEnabled', 'showTimer'];
-      if (!e.key || !syncKeys.includes(e.key)) return;
-
+    const doSync = () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
         try {
@@ -64,10 +62,24 @@ export function useSettingsSync() {
       }, 1500);
     };
 
+    // Cross-tab changes
+    const handleStorage = (e: StorageEvent) => {
+      if (!e.key || !syncKeys.includes(e.key)) return;
+      doSync();
+    };
+
+    // Same-tab changes: intercept localStorage.setItem
+    const origSetItem = localStorage.setItem.bind(localStorage);
+    localStorage.setItem = function (key: string, value: string) {
+      origSetItem(key, value);
+      if (syncKeys.includes(key)) doSync();
+    };
+
     window.addEventListener('storage', handleStorage);
     return () => {
       clearTimeout(timer);
       window.removeEventListener('storage', handleStorage);
+      localStorage.setItem = origSetItem;
     };
   }, [user]);
 }
