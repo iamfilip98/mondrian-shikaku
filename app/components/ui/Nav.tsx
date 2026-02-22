@@ -1,6 +1,6 @@
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
-import { motion } from 'framer-motion';
-import ThemeToggle from './ThemeToggle';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const navLinks = [
   { href: '/play', label: 'Play' },
@@ -13,6 +13,7 @@ const navLinks = [
 
 export default function Nav() {
   const location = useLocation();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <nav
@@ -24,6 +25,7 @@ export default function Nav() {
         <Link
           to="/"
           className="flex items-center gap-2 px-4 h-full border-r-[3px] border-[var(--color-border)] shrink-0"
+          onClick={() => setMenuOpen(false)}
         >
           <div
             className="flex items-center justify-center"
@@ -58,8 +60,8 @@ export default function Nav() {
           </span>
         </Link>
 
-        {/* Nav links */}
-        <div className="flex items-center h-full overflow-x-auto">
+        {/* Desktop nav links */}
+        <div className="hidden md:flex items-center h-full">
           {navLinks.map((link) => {
             const isActive =
               location.pathname === link.href ||
@@ -98,15 +100,10 @@ export default function Nav() {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Theme toggle */}
-        <div className="flex items-center h-full border-l-[3px] border-[var(--color-border)] px-2">
-          <ThemeToggle />
-        </div>
-
-        {/* Auth link */}
+        {/* Auth link (desktop) */}
         <Link
           to="/login"
-          className="flex items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] shrink-0"
+          className="hidden md:flex items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] shrink-0"
           style={{
             fontFamily: 'var(--font-body)',
             fontWeight: 500,
@@ -116,7 +113,78 @@ export default function Nav() {
         >
           Sign In
         </Link>
+
+        {/* Mobile hamburger */}
+        <button
+          className="flex md:hidden items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] cursor-pointer"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-lg)',
+            color: 'var(--color-text)',
+            background: 'none',
+            border: 'none',
+            borderLeft: '3px solid var(--color-border)',
+          }}
+          onClick={() => setMenuOpen(!menuOpen)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        >
+          {menuOpen ? '✕' : '☰'}
+        </button>
       </div>
+
+      {/* Mobile menu dropdown */}
+      <AnimatePresence>
+        {menuOpen && (
+          <motion.div
+            className="md:hidden absolute left-0 right-0 z-50 bg-[var(--color-bg)] border-b-[3px] border-[var(--color-border)]"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{ overflow: 'hidden' }}
+          >
+            {navLinks.map((link) => {
+              const isActive =
+                location.pathname === link.href ||
+                location.pathname.startsWith(link.href + '/');
+
+              return (
+                <Link
+                  key={link.href}
+                  to={link.href}
+                  className="flex items-center px-6 border-b-2 border-[var(--color-border)]"
+                  style={{
+                    height: '48px',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: isActive ? 500 : 400,
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--color-text)',
+                    backgroundColor: isActive ? 'var(--color-red)' : 'transparent',
+                    ...(isActive && { color: 'var(--color-text-inverse)' }),
+                  }}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
+            <Link
+              to="/login"
+              className="flex items-center px-6"
+              style={{
+                height: '48px',
+                fontFamily: 'var(--font-body)',
+                fontWeight: 500,
+                fontSize: 'var(--text-sm)',
+                color: 'var(--color-text)',
+              }}
+              onClick={() => setMenuOpen(false)}
+            >
+              Sign In
+            </Link>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 }

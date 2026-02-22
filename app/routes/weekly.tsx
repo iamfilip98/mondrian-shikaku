@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getISOWeek } from 'date-fns';
 import { getWeeklyPuzzle, getTimeUntilMondayUTC } from '~/lib/puzzle/scheduled';
+import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
 import GamePage from '~/components/game/GamePage';
 
@@ -17,10 +18,32 @@ export function meta() {
 }
 
 export default function Weekly() {
-  const now = useMemo(() => new Date(), []);
-  const week = getISOWeek(now);
-  const year = now.getFullYear();
-  const puzzle = useMemo(() => getWeeklyPuzzle(now), [now]);
+  const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const [week, setWeek] = useState(0);
+  const [year, setYear] = useState(0);
+
+  useEffect(() => {
+    const now = new Date();
+    setWeek(getISOWeek(now));
+    setYear(now.getFullYear());
+    setPuzzle(getWeeklyPuzzle(now));
+  }, []);
+
+  if (!puzzle) {
+    return (
+      <div className="flex items-center justify-center" style={{ height: '60vh' }}>
+        <span
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-lg)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          Generating puzzle...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div>

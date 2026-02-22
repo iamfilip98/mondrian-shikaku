@@ -1,4 +1,3 @@
-import { useState, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { GameTimer } from '~/components/ui/Countdown';
 
@@ -24,34 +23,15 @@ export default function GameControls({
   showTimer,
   hintsRemaining,
   onHint,
-  onClear,
   onSettings,
 }: GameControlsProps) {
-  const [clearPending, setClearPending] = useState(false);
-  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleClear = useCallback(() => {
-    if (clearPending) {
-      // Second press — confirm clear
-      setClearPending(false);
-      if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
-      onClear();
-    } else {
-      // First press — start confirmation
-      setClearPending(true);
-      clearTimerRef.current = setTimeout(() => {
-        setClearPending(false);
-      }, 2000);
-    }
-  }, [clearPending, onClear]);
-
   return (
     <div
       className="w-full border-2 border-[var(--color-border)] bg-[var(--color-surface)]"
       style={{
-        height: '56px',
+        height: '48px',
         display: 'grid',
-        gridTemplateColumns: '56px 56px 1fr 80px 80px 48px',
+        gridTemplateColumns: '48px 48px 1fr auto 44px',
         alignItems: 'center',
       }}
     >
@@ -119,7 +99,7 @@ export default function GameControls({
 
       {/* Hint */}
       <motion.button
-        className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)] cursor-pointer gap-1"
+        className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)] cursor-pointer gap-1 px-3"
         style={{
           fontFamily: 'var(--font-body)',
           fontSize: 'var(--text-sm)',
@@ -137,22 +117,6 @@ export default function GameControls({
         aria-label={`Use hint. ${hintsRemaining} remaining`}
       >
         Hint ({hintsRemaining})
-      </motion.button>
-
-      {/* Clear */}
-      <motion.button
-        className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)] cursor-pointer"
-        style={{
-          fontFamily: 'var(--font-body)',
-          fontSize: 'var(--text-sm)',
-          color: 'var(--color-text)',
-          backgroundColor: clearPending ? 'var(--color-yellow)' : 'transparent',
-        }}
-        whileHover={{ backgroundColor: clearPending ? 'var(--color-yellow)' : 'var(--color-surface-2)' }}
-        onClick={handleClear}
-        aria-label={clearPending ? 'Press again to clear all' : 'Clear all rectangles'}
-      >
-        {clearPending ? 'Sure?' : '✕ Clear'}
       </motion.button>
 
       {/* Settings */}

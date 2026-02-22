@@ -347,7 +347,7 @@ export default function GamePage({
   return (
     <div className="flex flex-col items-center gap-4 py-4 px-4">
       {/* Controls */}
-      <div style={{ width: svgWidth }}>
+      <div style={{ width: Math.min(svgWidth, typeof window !== 'undefined' ? window.innerWidth * 0.92 : svgWidth) }}>
         <GameControls
           canUndo={gameState.canUndo}
           canRedo={gameState.canRedo}

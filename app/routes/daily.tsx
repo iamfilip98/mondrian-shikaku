@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getDailyPuzzle, getTimeUntilMidnightUTC } from '~/lib/puzzle/scheduled';
+import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
 import GamePage from '~/components/game/GamePage';
 
@@ -16,9 +17,30 @@ export function meta() {
 }
 
 export default function Daily() {
-  const today = useMemo(() => new Date(), []);
-  const dateStr = today.toISOString().slice(0, 10);
-  const puzzle = useMemo(() => getDailyPuzzle(today), [today]);
+  const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const [dateStr, setDateStr] = useState('');
+
+  useEffect(() => {
+    const today = new Date();
+    setDateStr(today.toISOString().slice(0, 10));
+    setPuzzle(getDailyPuzzle(today));
+  }, []);
+
+  if (!puzzle) {
+    return (
+      <div className="flex items-center justify-center" style={{ height: '60vh' }}>
+        <span
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-lg)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          Generating puzzle...
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div>
