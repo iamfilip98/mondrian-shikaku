@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo } from 'react';
+import { useRef, useCallback, useMemo, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Puzzle } from '~/lib/puzzle/types';
 import type { PlacedRect } from '~/lib/hooks/useGameState';
@@ -18,7 +18,7 @@ interface GameBoardProps {
   showDragCounter: boolean;
 }
 
-export default function GameBoard({
+export default memo(function GameBoard({
   puzzle,
   placed,
   startCell,
@@ -284,4 +284,4 @@ export default function GameBoard({
       )}
     </svg>
   );
-}
+})

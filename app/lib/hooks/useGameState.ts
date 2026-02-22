@@ -1,12 +1,9 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import type { Puzzle, GridRect, Clue } from '~/lib/puzzle/types';
+import type { Puzzle, GridRect, PlacedRect } from '~/lib/puzzle/types';
 import { assignColors, getUnlockedColors } from '~/lib/puzzle/graphColor';
+import { validateRect, rectsOverlap, checkComplete } from '~/lib/puzzle/gameLogic';
 
-export interface PlacedRect extends GridRect {
-  color: string;
-  isCorrect: boolean;
-  clueIndex: number; // which clue this rect covers, or -1
-}
+export type { PlacedRect } from '~/lib/puzzle/types';
 
 interface GameHistory {
   placed: PlacedRect[];
@@ -24,59 +21,6 @@ export interface GameState {
   hintsRemaining: number;
   elapsedSeconds: number;
   blindMode: boolean;
-}
-
-function validateRect(
-  rect: GridRect,
-  clues: Clue[]
-): { isCorrect: boolean; clueIndex: number } {
-  const area = rect.width * rect.height;
-  let containedClues: { clue: Clue; index: number }[] = [];
-
-  for (let i = 0; i < clues.length; i++) {
-    const c = clues[i];
-    if (
-      c.row >= rect.row &&
-      c.row < rect.row + rect.height &&
-      c.col >= rect.col &&
-      c.col < rect.col + rect.width
-    ) {
-      containedClues.push({ clue: c, index: i });
-    }
-  }
-
-  if (containedClues.length === 1 && containedClues[0].clue.value === area) {
-    return { isCorrect: true, clueIndex: containedClues[0].index };
-  }
-
-  return { isCorrect: false, clueIndex: containedClues.length === 1 ? containedClues[0].index : -1 };
-}
-
-function rectsOverlap(a: GridRect, b: GridRect): boolean {
-  return !(
-    a.col + a.width <= b.col ||
-    b.col + b.width <= a.col ||
-    a.row + a.height <= b.row ||
-    b.row + b.height <= a.row
-  );
-}
-
-function checkComplete(placed: PlacedRect[], puzzle: Puzzle): boolean {
-  // All cells must be covered by correct rectangles
-  const grid = Array.from({ length: puzzle.height }, () =>
-    Array.from({ length: puzzle.width }, () => false)
-  );
-
-  for (const rect of placed) {
-    if (!rect.isCorrect) return false;
-    for (let r = rect.row; r < rect.row + rect.height; r++) {
-      for (let c = rect.col; c < rect.col + rect.width; c++) {
-        grid[r][c] = true;
-      }
-    }
-  }
-
-  return grid.every((row) => row.every(Boolean));
 }
 
 export function useGameState(puzzle: Puzzle, blindMode = false) {
@@ -164,8 +108,8 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
         clueIndex,
       };
 
-      // Store actual correctness separately for win detection
-      (newRect as any)._actuallyCorrect = isCorrect;
+      // Store actual correctness for win detection in blind mode
+      newRect._actuallyCorrect = isCorrect;
 
       const newPlaced = [...nonOverlapping, newRect];
       setPlaced(newPlaced);
@@ -180,7 +124,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
       const complete = checkComplete(
         newPlaced.map((p) => ({
           ...p,
-          isCorrect: (p as any)._actuallyCorrect ?? p.isCorrect,
+          isCorrect: p._actuallyCorrect ?? p.isCorrect,
         })),
         puzzle
       );
@@ -240,7 +184,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
           p.col === solRect.col &&
           p.width === solRect.width &&
           p.height === solRect.height &&
-          ((p as any)._actuallyCorrect ?? p.isCorrect)
+          (p._actuallyCorrect ?? p.isCorrect)
       );
       if (!alreadyPlaced) {
         // Check no overlap with correctly placed rects
@@ -254,7 +198,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
             isCorrect: true,
             clueIndex,
           };
-          (newRect as any)._actuallyCorrect = true;
+          newRect._actuallyCorrect = true;
 
           const newPlaced = [...placed, newRect];
           setPlaced(newPlaced);
@@ -268,7 +212,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
           const complete = checkComplete(
             newPlaced.map((p) => ({
               ...p,
-              isCorrect: (p as any)._actuallyCorrect ?? p.isCorrect,
+              isCorrect: p._actuallyCorrect ?? p.isCorrect,
             })),
             puzzle
           );

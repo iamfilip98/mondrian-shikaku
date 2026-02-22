@@ -18,12 +18,33 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const body = await request.json();
 
-  // Whitelist fields
+  // Whitelist fields + validate values
   const updates: Record<string, unknown> = {};
   for (const key of Object.keys(body)) {
-    if (ALLOWED_FIELDS.has(key)) {
-      updates[key] = body[key];
+    if (!ALLOWED_FIELDS.has(key)) continue;
+    const value = body[key];
+
+    switch (key) {
+      case 'theme':
+        if (value !== 'light' && value !== 'dark' && value !== 'system') {
+          return Response.json({ error: 'Invalid theme value' }, { status: 400 });
+        }
+        break;
+      case 'blind_mode':
+      case 'sound_enabled':
+      case 'show_timer':
+        if (typeof value !== 'boolean') {
+          return Response.json({ error: `${key} must be a boolean` }, { status: 400 });
+        }
+        break;
+      case 'avatar_color':
+        if (typeof value !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(value)) {
+          return Response.json({ error: 'Invalid avatar_color format' }, { status: 400 });
+        }
+        break;
     }
+
+    updates[key] = value;
   }
 
   if (Object.keys(updates).length === 0) {

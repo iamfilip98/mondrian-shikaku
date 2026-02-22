@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useAuth, type Profile } from './useAuth';
 import { useTheme } from './useTheme';
+import { useToast } from './useToast';
 
 /**
  * Syncs settings between localStorage and Supabase profile.
@@ -10,6 +11,7 @@ import { useTheme } from './useTheme';
 export function useSettingsSync() {
   const { user, profile, getToken } = useAuth();
   const { setTheme } = useTheme();
+  const { addToast } = useToast();
   const lastSyncedRef = useRef<string | null>(null);
 
   // On login: pull profile settings → localStorage
@@ -54,7 +56,7 @@ export function useSettingsSync() {
           const token = await getToken();
           if (!token) return;
 
-          await fetch('/api/profile/update', {
+          const res = await fetch('/api/profile/update', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -67,7 +69,10 @@ export function useSettingsSync() {
               show_timer: localStorage.getItem('showTimer') !== 'false',
             }),
           });
-        } catch {}
+          if (!res.ok) throw new Error();
+        } catch {
+          addToast('Settings sync failed. Changes saved locally.', 'error');
+        }
       }, 1500);
     };
 

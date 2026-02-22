@@ -12,7 +12,9 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import type { Route } from './+types/root';
 import { ThemeContext, useThemeProvider } from '~/lib/hooks/useTheme';
 import { useSettingsSync } from '~/lib/hooks/useSettingsSync';
+import { ToastProvider } from '~/lib/hooks/useToast';
 import Nav from '~/components/ui/Nav';
+import ToastContainer from '~/components/ui/ToastContainer';
 import './app.css';
 
 const initThemeScript = `(function(){try{
@@ -90,7 +92,10 @@ export default function App() {
       afterSignOutUrl="/"
     >
       <ThemeContext.Provider value={themeValue}>
-        <AppContent />
+        <ToastProvider>
+          <AppContent />
+          <ToastContainer />
+        </ToastProvider>
       </ThemeContext.Provider>
     </ClerkProvider>
   );

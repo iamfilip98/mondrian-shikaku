@@ -7,6 +7,8 @@ import {
   getWeeklyLeaderboard,
   getMonthlyLeaderboard,
   getAllTimeLeaderboard,
+  type LeaderboardRow,
+  type AllTimeLeaderboardRow,
 } from '~/lib/supabase/queries';
 
 export function meta() {
@@ -24,6 +26,10 @@ const tabs = ['Daily', 'Weekly', 'Monthly', 'All-Time'] as const;
 type Tab = (typeof tabs)[number];
 
 const difficulties = ['primer', 'easy', 'medium', 'hard', 'expert', 'nightmare'] as const;
+
+// Module-level cache with 60s TTL
+const leaderboardCache = new Map<string, { entries: LeaderboardEntry[]; fetchedAt: number }>();
+const CACHE_TTL = 60_000;
 type Difficulty = (typeof difficulties)[number];
 
 interface LeaderboardEntry {
@@ -36,7 +42,7 @@ interface LeaderboardEntry {
   totalSolves?: number;
 }
 
-function mapEntries(data: any[]): LeaderboardEntry[] {
+function mapEntries(data: LeaderboardRow[]): LeaderboardEntry[] {
   return data.map((row, i) => ({
     rank: i + 1,
     username: row.username,
@@ -47,7 +53,7 @@ function mapEntries(data: any[]): LeaderboardEntry[] {
   }));
 }
 
-function mapAllTimeEntries(data: any[]): LeaderboardEntry[] {
+function mapAllTimeEntries(data: AllTimeLeaderboardRow[]): LeaderboardEntry[] {
   return data.map((row, i) => ({
     rank: i + 1,
     username: row.username,
@@ -64,39 +70,52 @@ export default function Leaderboard() {
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
   const { profile } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setError(null);
+
+    const cacheKey = activeTab === 'All-Time' ? `${activeTab}-${difficulty}` : activeTab;
+    const cached = leaderboardCache.get(cacheKey);
+    if (cached && Date.now() - cached.fetchedAt < CACHE_TTL) {
+      setEntries(cached.entries);
+      setLoading(false);
+      return;
+    }
 
     const fetchData = async () => {
-      let data: any[] = [];
-      switch (activeTab) {
-        case 'Daily':
-          data = await getDailyLeaderboard();
-          break;
-        case 'Weekly':
-          data = await getWeeklyLeaderboard();
-          break;
-        case 'Monthly':
-          data = await getMonthlyLeaderboard();
-          break;
-        case 'All-Time':
-          data = await getAllTimeLeaderboard(difficulty);
-          break;
-      }
-      if (!cancelled) {
-        setEntries(
-          activeTab === 'All-Time' ? mapAllTimeEntries(data) : mapEntries(data)
-        );
-        setLoading(false);
+      try {
+        let mapped: LeaderboardEntry[];
+        if (activeTab === 'All-Time') {
+          const data = await getAllTimeLeaderboard(difficulty);
+          mapped = mapAllTimeEntries(data);
+        } else {
+          const fetcher = activeTab === 'Daily' ? getDailyLeaderboard
+            : activeTab === 'Weekly' ? getWeeklyLeaderboard
+            : getMonthlyLeaderboard;
+          const data = await fetcher();
+          mapped = mapEntries(data);
+        }
+        if (!cancelled) {
+          leaderboardCache.set(cacheKey, { entries: mapped, fetchedAt: Date.now() });
+          setEntries(mapped);
+          setLoading(false);
+        }
+      } catch {
+        if (!cancelled) {
+          setError('Failed to load leaderboard.');
+          setLoading(false);
+        }
       }
     };
 
     fetchData();
     return () => { cancelled = true; };
-  }, [activeTab, difficulty]);
+  }, [activeTab, difficulty, retryKey]);
 
   return (
     <div className="max-w-[800px] mx-auto px-6 py-12">
@@ -180,6 +199,32 @@ export default function Leaderboard() {
           }}
         >
           Loading...
+        </div>
+      ) : error ? (
+        <div
+          className="flex flex-col items-center justify-center gap-4 py-12"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          <span>{error}</span>
+          <button
+            onClick={() => setRetryKey((k) => k + 1)}
+            className="cursor-pointer"
+            style={{
+              padding: '8px 20px',
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-sm)',
+              fontWeight: 500,
+              color: 'var(--color-text-inverse)',
+              backgroundColor: 'var(--color-border)',
+              border: 'none',
+            }}
+          >
+            Retry
+          </button>
         </div>
       ) : (
         <LeaderboardTable

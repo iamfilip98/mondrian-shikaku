@@ -1,42 +1,61 @@
 import { getSupabaseClient } from './client';
 
-export async function getDailyLeaderboard() {
+export interface LeaderboardRow {
+  username: string;
+  avatar_color: string;
+  solve_time_seconds: number;
+  hints_used: number;
+  completed_at: string;
+}
+
+export interface AllTimeLeaderboardRow {
+  username: string;
+  avatar_color: string;
+  best_time: number;
+  avg_time: number;
+  total_solves: number;
+}
+
+export async function getDailyLeaderboard(): Promise<LeaderboardRow[]> {
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('leaderboard_daily')
     .select('*')
     .limit(100);
 
+  if (error) throw new Error(error.message);
   return data || [];
 }
 
-export async function getWeeklyLeaderboard() {
+export async function getWeeklyLeaderboard(): Promise<LeaderboardRow[]> {
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('leaderboard_weekly')
     .select('*')
     .limit(100);
 
+  if (error) throw new Error(error.message);
   return data || [];
 }
 
-export async function getMonthlyLeaderboard() {
+export async function getMonthlyLeaderboard(): Promise<LeaderboardRow[]> {
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('leaderboard_monthly')
     .select('*')
     .limit(100);
 
+  if (error) throw new Error(error.message);
   return data || [];
 }
 
-export async function getAllTimeLeaderboard(difficulty?: string) {
+export async function getAllTimeLeaderboard(difficulty?: string): Promise<AllTimeLeaderboardRow[]> {
   const supabase = getSupabaseClient();
   if (!supabase) return [];
 
@@ -46,7 +65,8 @@ export async function getAllTimeLeaderboard(difficulty?: string) {
     query = query.eq('difficulty', difficulty);
   }
 
-  const { data } = await query.limit(100);
+  const { data, error } = await query.limit(100);
+  if (error) throw new Error(error.message);
   return data || [];
 }
 

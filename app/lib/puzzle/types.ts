@@ -26,6 +26,13 @@ export interface Clue {
   value: number; // always ≥ 2, never 1
 }
 
+export interface PlacedRect extends GridRect {
+  color: string;
+  isCorrect: boolean;
+  clueIndex: number; // which clue this rect covers, or -1
+  _actuallyCorrect?: boolean;
+}
+
 export interface Puzzle {
   width: number;
   height: number;

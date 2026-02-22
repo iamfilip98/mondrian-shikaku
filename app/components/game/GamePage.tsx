@@ -5,6 +5,7 @@ import type { GridRect } from '~/lib/puzzle/types';
 import { useGameState } from '~/lib/hooks/useGameState';
 import { useSound } from '~/lib/hooks/useSound';
 import { useAuth } from '~/lib/hooks/useAuth';
+import { useToast } from '~/lib/hooks/useToast';
 import GameBoard from './GameBoard';
 import GameControls from './GameControls';
 import SettingsDrawer from './SettingsDrawer';
@@ -39,6 +40,7 @@ export default function GamePage({
   const gameState = useGameState(puzzle, blindMode);
   const sound = useSound();
   const { user, profile, refreshProfile, getToken } = useAuth();
+  const { addToast } = useToast();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [introComplete, setIntroComplete] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -84,7 +86,10 @@ export default function GamePage({
     );
   }, [puzzle.width, puzzle.height]);
 
-  const needsZoom = cellSize * puzzle.width > (typeof window !== 'undefined' ? window.innerWidth * 0.9 : 800);
+  const needsZoom = useMemo(
+    () => cellSize * puzzle.width > (typeof window !== 'undefined' ? window.innerWidth * 0.9 : 800),
+    [cellSize, puzzle.width]
+  );
 
   // Win detection
   const prevCompleteRef = useRef(false);
@@ -98,7 +103,7 @@ export default function GamePage({
     }, 800);
   }
 
-  // Submit solve when game completes
+  // Submit solve when game completes (with retry)
   useEffect(() => {
     if (!gameState.isComplete || solveSubmittedRef.current || !user || !puzzleSeed) return;
     solveSubmittedRef.current = true;
@@ -112,33 +117,46 @@ export default function GamePage({
       const token = await getToken();
       if (!token) return;
 
-      const res = await fetch('/api/solve', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          puzzleType: puzzleTypeKey,
-          puzzleSeed,
-          difficulty,
-          gridWidth: puzzle.width,
-          gridHeight: puzzle.height,
-          solveTimeSeconds: gameState.elapsedSeconds,
-          hintsUsed: gameState.hintsUsed,
-          blindModeOn: blindMode,
-        }),
-      });
+      const payload = {
+        puzzleType: puzzleTypeKey,
+        puzzleSeed,
+        difficulty,
+        gridWidth: puzzle.width,
+        gridHeight: puzzle.height,
+        solveTimeSeconds: gameState.elapsedSeconds,
+        hintsUsed: gameState.hintsUsed,
+        blindModeOn: blindMode,
+      };
 
-      if (res.ok) {
-        const data = await res.json();
-        if (puzzleTypeKey === 'daily' && data.streak) {
-          setWinStreak(data.streak);
+      const delays = [0, 1000, 2000];
+      for (let attempt = 0; attempt < delays.length; attempt++) {
+        if (attempt > 0) await new Promise((r) => setTimeout(r, delays[attempt]));
+        try {
+          const res = await fetch('/api/solve', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            if (puzzleTypeKey === 'daily' && data.streak) {
+              setWinStreak(data.streak);
+            }
+            addToast('Solve saved!', 'success');
+            await refreshProfile();
+            return;
+          }
+        } catch {
+          // retry
         }
-        await refreshProfile();
       }
+      addToast('Could not save your solve. Please try again later.', 'error');
     })();
-  }, [gameState.isComplete, user, puzzleSeed, puzzleType, difficulty, puzzle.width, puzzle.height, gameState.elapsedSeconds, gameState.hintsUsed, blindMode, refreshProfile, getToken]);
+  }, [gameState.isComplete, user, puzzleSeed, puzzleType, difficulty, puzzle.width, puzzle.height, gameState.elapsedSeconds, gameState.hintsUsed, blindMode, refreshProfile, getToken, addToast]);
 
   // Cancel any in-progress game interaction
   const cancelInteraction = useCallback(() => {
@@ -293,7 +311,7 @@ export default function GamePage({
 
         const placed = gameState.placeRect(rect);
         if (placed) {
-          if ((placed as any)._actuallyCorrect ?? placed.isCorrect) {
+          if (placed._actuallyCorrect ?? placed.isCorrect) {
             sound.playThunk();
           } else {
             sound.playBuzz();
@@ -326,7 +344,7 @@ export default function GamePage({
 
                 const placed = gameState.placeRect(rect);
                 if (placed) {
-                  if ((placed as any)._actuallyCorrect ?? placed.isCorrect) {
+                  if (placed._actuallyCorrect ?? placed.isCorrect) {
                     sound.playThunk();
                   } else {
                     sound.playBuzz();

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '~/lib/hooks/useAuth';
+import { useToast } from '~/lib/hooks/useToast';
 import { getUserStats } from '~/lib/supabase/queries';
 
 export function meta() {
@@ -46,6 +47,7 @@ function formatDate(iso: string): string {
 
 export default function Profile() {
   const { user, profile, loading, refreshProfile, getToken } = useAuth();
+  const { addToast } = useToast();
   const [stats, setStats] = useState<DifficultyStats[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [savingColor, setSavingColor] = useState(false);
@@ -75,7 +77,7 @@ export default function Profile() {
     try {
       const token = await getToken();
       if (token) {
-        await fetch('/api/profile/update', {
+        const res = await fetch('/api/profile/update', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -83,8 +85,15 @@ export default function Profile() {
           },
           body: JSON.stringify({ avatar_color: color }),
         });
-        await refreshProfile();
+        if (res.ok) {
+          await refreshProfile();
+          addToast('Avatar color updated!', 'success');
+        } else {
+          addToast('Failed to update avatar color.', 'error');
+        }
       }
+    } catch {
+      addToast('Network error. Please try again.', 'error');
     } finally {
       setSavingColor(false);
     }
@@ -153,8 +162,8 @@ export default function Profile() {
   // Sort stats by difficulty order
   const sortedStats = [...stats].sort(
     (a, b) =>
-      DIFFICULTY_ORDER.indexOf(a.difficulty as any) -
-      DIFFICULTY_ORDER.indexOf(b.difficulty as any)
+      DIFFICULTY_ORDER.indexOf(a.difficulty as typeof DIFFICULTY_ORDER[number]) -
+      DIFFICULTY_ORDER.indexOf(b.difficulty as typeof DIFFICULTY_ORDER[number])
   );
 
   return (

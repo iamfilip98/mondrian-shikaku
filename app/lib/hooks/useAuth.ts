@@ -23,6 +23,7 @@ export function useAuth() {
   const { signOut: clerkSignOut } = useClerk();
   const { getToken } = useClerkAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
     const data = await getProfile(userId);
@@ -42,26 +43,33 @@ export function useAuth() {
     fetchProfile(user.id).then(async (existing) => {
       if (!existing) {
         // First sign-in — auto-create profile via server API
-        const token = await getToken();
-        if (!token) return;
+        try {
+          const token = await getToken();
+          if (!token) return;
 
-        const username =
-          user.username ||
-          user.firstName?.toLowerCase().replace(/\s+/g, '_') ||
-          user.primaryEmailAddress?.emailAddress?.split('@')[0] ||
-          `player_${user.id.slice(0, 8)}`;
+          const username =
+            user.username ||
+            user.firstName?.toLowerCase().replace(/\s+/g, '_') ||
+            user.primaryEmailAddress?.emailAddress?.split('@')[0] ||
+            `player_${user.id.slice(0, 8)}`;
 
-        const res = await fetch('/api/profile/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ username }),
-        });
+          const res = await fetch('/api/profile/create', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ username }),
+          });
 
-        if (res.ok) {
-          await fetchProfile(user.id);
+          if (res.ok) {
+            setProfileError(null);
+            await fetchProfile(user.id);
+          } else {
+            setProfileError('Failed to create profile. Please try again.');
+          }
+        } catch {
+          setProfileError('Network error creating profile.');
         }
       }
     });
@@ -79,6 +87,7 @@ export function useAuth() {
   return {
     user: isSignedIn && user ? { id: user.id } : null,
     profile,
+    profileError,
     loading: !isLoaded,
     signOut,
     refreshProfile,

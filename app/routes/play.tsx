@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { generatePuzzle } from '~/lib/puzzle/generator';
 import { DIFFICULTY_CONFIGS, type Difficulty } from '~/lib/puzzle/types';
@@ -47,26 +47,73 @@ export default function Play() {
     `free-${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
 
-  const puzzle = useMemo(() => {
-    if (!selected) return null;
-    const config = DIFFICULTY_CONFIGS[selected];
-    try {
-      return generatePuzzle({
-        width: config.maxGrid,
-        height: config.maxGrid,
-        difficulty: selected,
-        seed: puzzleSeed,
-      });
-    } catch {
-      return null;
+  const [puzzle, setPuzzle] = useState<ReturnType<typeof generatePuzzle> | null>(null);
+  const [generating, setGenerating] = useState(false);
+
+  useEffect(() => {
+    if (!selected) {
+      setPuzzle(null);
+      return;
     }
+    setGenerating(true);
+    setPuzzle(null);
+
+    // Defer generation to next frame so UI can show loading state
+    const id = requestAnimationFrame(() => {
+      const config = DIFFICULTY_CONFIGS[selected];
+      try {
+        const p = generatePuzzle({
+          width: config.maxGrid,
+          height: config.maxGrid,
+          difficulty: selected,
+          seed: puzzleSeed,
+        });
+        setPuzzle(p);
+      } catch {
+        setPuzzle(null);
+      }
+      setGenerating(false);
+    });
+    return () => cancelAnimationFrame(id);
   }, [selected, puzzleSeed]);
 
   const handleNextPuzzle = () => {
     setPuzzleSeed(`free-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   };
 
-  if (selected && puzzle) {
+  if (selected && (puzzle || generating)) {
+    if (generating || !puzzle) {
+      return (
+        <div>
+          <div className="flex items-center gap-4 px-6 py-3 border-b-2 border-[var(--color-border)]">
+            <button
+              onClick={() => setSelected(null)}
+              className="cursor-pointer"
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--text-sm)',
+                color: 'var(--color-text-muted)',
+                background: 'none',
+                border: 'none',
+              }}
+            >
+              ← Back
+            </button>
+          </div>
+          <div
+            className="flex items-center justify-center py-24"
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-sm)',
+              color: 'var(--color-text-muted)',
+            }}
+          >
+            Generating puzzle...
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div>
         <div className="flex items-center gap-4 px-6 py-3 border-b-2 border-[var(--color-border)]">
