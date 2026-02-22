@@ -163,42 +163,30 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Feature Strip */}
+      {/* Scheduled Puzzles Strip */}
       <section className="w-full border-b-[3px] border-[var(--color-border)]">
-        <div className="grid" style={{ gridTemplateColumns: '45% 30% 25%' }}>
-          <div
-            className="flex flex-col justify-center px-8 py-10 border-r-[3px] border-[var(--color-border)]"
-            style={{ backgroundColor: 'var(--color-red)' }}
-          >
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-5xl)', color: 'var(--color-white)', lineHeight: 'var(--leading-tight)' }}>
-              6
-            </span>
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 'var(--text-base)', color: 'var(--color-white)', marginTop: '8px' }}>
-              One number. One rectangle.
-            </span>
-          </div>
-          <div
-            className="flex flex-col justify-center px-8 py-10 border-r-[3px] border-[var(--color-border)]"
-            style={{ backgroundColor: 'var(--color-blue)' }}
-          >
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-5xl)', color: 'var(--color-white)', lineHeight: 'var(--leading-tight)' }}>
-              20
-            </span>
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 'var(--text-base)', color: 'var(--color-white)', marginTop: '8px' }}>
-              Every cell must belong.
-            </span>
-          </div>
-          <div
-            className="flex flex-col justify-center px-8 py-10"
-            style={{ backgroundColor: 'var(--color-yellow)' }}
-          >
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-5xl)', color: 'var(--color-black)', lineHeight: 'var(--leading-tight)' }}>
-              4
-            </span>
-            <span style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 'var(--text-base)', color: 'var(--color-black)', marginTop: '8px' }}>
-              Logic, not guessing.
-            </span>
-          </div>
+        <div className="grid grid-cols-3">
+          {[
+            { name: 'Daily', grid: '10×10', href: '/daily', getMs: getTimeUntilMidnightUTC },
+            { name: 'Weekly', grid: '20×20', href: '/weekly', getMs: getTimeUntilMondayUTC },
+            { name: 'Monthly', grid: '40×40', href: '/monthly', getMs: getTimeUntilFirstOfMonth },
+          ].map((p, i) => (
+            <div
+              key={p.name}
+              className={`flex flex-col items-center justify-center py-8 px-4 ${i < 2 ? 'border-r-[3px] border-[var(--color-border)]' : ''}`}
+            >
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-2xl)', color: 'var(--color-text)' }}>
+                {p.name}
+              </span>
+              <span className="mt-1 mb-2" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                {p.grid}
+              </span>
+              <Countdown targetMs={p.getMs()} className="mb-4" />
+              <Link to={p.href}>
+                <Button variant="outline" size="sm">Play Now</Button>
+              </Link>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -238,33 +226,6 @@ export default function Home() {
         <p className="mt-4" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
           The rules fit in one sentence.
         </p>
-      </section>
-
-      {/* Scheduled Puzzles Strip */}
-      <section className="w-full border-t-[3px] border-b-[3px] border-[var(--color-border)]">
-        <div className="grid grid-cols-3">
-          {[
-            { name: 'Daily', grid: '10×10', href: '/daily', getMs: getTimeUntilMidnightUTC },
-            { name: 'Weekly', grid: '20×20', href: '/weekly', getMs: getTimeUntilMondayUTC },
-            { name: 'Monthly', grid: '40×40', href: '/monthly', getMs: getTimeUntilFirstOfMonth },
-          ].map((p, i) => (
-            <div
-              key={p.name}
-              className={`flex flex-col items-center justify-center py-8 px-4 ${i < 2 ? 'border-r-[3px] border-[var(--color-border)]' : ''}`}
-            >
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-2xl)', color: 'var(--color-text)' }}>
-                {p.name}
-              </span>
-              <span className="mt-1 mb-2" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                {p.grid}
-              </span>
-              <Countdown targetMs={p.getMs()} className="mb-4" />
-              <Link to={p.href}>
-                <Button variant="outline" size="sm">Play Now</Button>
-              </Link>
-            </div>
-          ))}
-        </div>
       </section>
 
       {/* Footer */}
