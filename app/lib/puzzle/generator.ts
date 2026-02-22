@@ -37,13 +37,13 @@ function partition(
     }
   }
 
-  // Choose axis: 80% longer dimension, 20% shorter (creates elongated children)
+  // Choose axis: 65% longer dimension, 35% shorter (more aspect ratio variety)
   let splitVertical: boolean;
   if (region.width === region.height) {
     splitVertical = rng() > 0.5;
   } else {
     const preferLonger = region.width > region.height;
-    splitVertical = rng() < 0.8 ? preferLonger : !preferLonger;
+    splitVertical = rng() < 0.65 ? preferLonger : !preferLonger;
   }
 
   const length = splitVertical ? region.width : region.height;
@@ -53,15 +53,25 @@ function partition(
     let splitPos: number;
     const roll = rng();
 
-    if (roll < 0.15) {
-      // Edge-biased: position 1 or length-1
-      splitPos = rng() < 0.5 ? 1 : length - 1;
-    } else if (roll < 0.40) {
-      // Wide range: 10–90%
-      splitPos = Math.floor(length * (0.1 + rng() * 0.8));
+    if (roll < 0.20) {
+      // Edge-biased: thin slice (1 or 2 cells) from one side
+      const edgeWidth = rng() < 0.7 ? 1 : 2;
+      splitPos = rng() < 0.5 ? edgeWidth : length - edgeWidth;
+    } else if (roll < 0.55) {
+      // Asymmetric: 15–40% or 60–85%, avoids creating equal halves
+      if (rng() < 0.5) {
+        splitPos = Math.floor(length * (0.15 + rng() * 0.25));
+      } else {
+        splitPos = Math.floor(length * (0.6 + rng() * 0.25));
+      }
     } else {
-      // Center-biased: 30–70%
-      splitPos = Math.floor(length * (0.3 + rng() * 0.4));
+      // Broad range: 10–90%
+      splitPos = Math.floor(length * (0.1 + rng() * 0.8));
+    }
+
+    // Avoid exact midpoint to prevent adjacent duplicate clue numbers
+    if (length >= 4 && splitPos * 2 === length) {
+      splitPos += rng() < 0.5 ? 1 : -1;
     }
 
     if (splitPos < 1 || splitPos >= length) continue;
@@ -105,44 +115,62 @@ function tryElongatedStrip(
   minArea: number,
   rng: () => number
 ): [Region, Region] | null {
-  // Try to carve a 1-wide strip from a random edge
-  const candidates: [Region, Region][] = [];
   const minAllowed = Math.max(minArea, 2);
 
-  // Top strip (1 x width)
-  if (region.width >= minAllowed && (region.height - 1) * region.width >= minAllowed) {
-    candidates.push([
-      { row: region.row, col: region.col, width: region.width, height: 1 },
-      { row: region.row + 1, col: region.col, width: region.width, height: region.height - 1 },
-    ]);
+  // Variable strip thickness: 1 (50%), 2 (35%), or 3 (15%)
+  const roll = rng();
+  const maxThickness = roll < 0.5 ? 1 : roll < 0.85 ? 2 : 3;
+
+  // Try from maxThickness down to 1 until we find valid candidates
+  for (let t = maxThickness; t >= 1; t--) {
+    const candidates: [Region, Region][] = [];
+
+    // Top strip (t rows x full width)
+    if (t < region.height &&
+        region.width * t >= minAllowed &&
+        (region.height - t) * region.width >= minAllowed) {
+      candidates.push([
+        { row: region.row, col: region.col, width: region.width, height: t },
+        { row: region.row + t, col: region.col, width: region.width, height: region.height - t },
+      ]);
+    }
+
+    // Bottom strip
+    if (t < region.height &&
+        region.width * t >= minAllowed &&
+        (region.height - t) * region.width >= minAllowed) {
+      candidates.push([
+        { row: region.row + region.height - t, col: region.col, width: region.width, height: t },
+        { row: region.row, col: region.col, width: region.width, height: region.height - t },
+      ]);
+    }
+
+    // Left strip (full height x t cols)
+    if (t < region.width &&
+        region.height * t >= minAllowed &&
+        region.height * (region.width - t) >= minAllowed) {
+      candidates.push([
+        { row: region.row, col: region.col, width: t, height: region.height },
+        { row: region.row, col: region.col + t, width: region.width - t, height: region.height },
+      ]);
+    }
+
+    // Right strip
+    if (t < region.width &&
+        region.height * t >= minAllowed &&
+        region.height * (region.width - t) >= minAllowed) {
+      candidates.push([
+        { row: region.row, col: region.col + region.width - t, width: t, height: region.height },
+        { row: region.row, col: region.col, width: region.width - t, height: region.height },
+      ]);
+    }
+
+    if (candidates.length > 0) {
+      return candidates[Math.floor(rng() * candidates.length)];
+    }
   }
 
-  // Bottom strip
-  if (region.width >= minAllowed && (region.height - 1) * region.width >= minAllowed) {
-    candidates.push([
-      { row: region.row + region.height - 1, col: region.col, width: region.width, height: 1 },
-      { row: region.row, col: region.col, width: region.width, height: region.height - 1 },
-    ]);
-  }
-
-  // Left strip (height x 1)
-  if (region.height >= minAllowed && region.height * (region.width - 1) >= minAllowed) {
-    candidates.push([
-      { row: region.row, col: region.col, width: 1, height: region.height },
-      { row: region.row, col: region.col + 1, width: region.width - 1, height: region.height },
-    ]);
-  }
-
-  // Right strip
-  if (region.height >= minAllowed && region.height * (region.width - 1) >= minAllowed) {
-    candidates.push([
-      { row: region.row, col: region.col + region.width - 1, width: 1, height: region.height },
-      { row: region.row, col: region.col, width: region.width - 1, height: region.height },
-    ]);
-  }
-
-  if (candidates.length === 0) return null;
-  return candidates[Math.floor(rng() * candidates.length)];
+  return null;
 }
 
 function placeClues(rects: GridRect[], rng: () => number): Clue[] {
