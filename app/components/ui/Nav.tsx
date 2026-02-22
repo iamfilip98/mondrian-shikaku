@@ -106,7 +106,11 @@ export default function Nav() {
         {!loading && (
           user ? (
             <div className="hidden md:flex items-center h-full border-l-[3px] border-[var(--color-border)]">
-              <div className="flex items-center gap-2 px-4">
+              <Link
+                to="/profile"
+                className="flex items-center gap-2 px-4 h-full"
+                style={{ textDecoration: 'none' }}
+              >
                 <div
                   style={{
                     width: '10px',
@@ -124,7 +128,7 @@ export default function Nav() {
                 >
                   {profile?.username || 'Player'}
                 </span>
-              </div>
+              </Link>
               <button
                 onClick={() => signOut()}
                 className="flex items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] cursor-pointer"
@@ -214,7 +218,8 @@ export default function Nav() {
             {!loading && (
               user ? (
                 <>
-                  <div
+                  <Link
+                    to="/profile"
                     className="flex items-center gap-2 px-6 border-b-2 border-[var(--color-border)]"
                     style={{
                       height: '48px',
@@ -222,7 +227,9 @@ export default function Nav() {
                       fontWeight: 500,
                       fontSize: 'var(--text-sm)',
                       color: 'var(--color-text)',
+                      textDecoration: 'none',
                     }}
+                    onClick={() => setMenuOpen(false)}
                   >
                     <div
                       style={{
@@ -232,7 +239,7 @@ export default function Nav() {
                       }}
                     />
                     {profile?.username || 'Player'}
-                  </div>
+                  </Link>
                   <button
                     className="flex items-center px-6 w-full cursor-pointer"
                     style={{

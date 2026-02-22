@@ -11,6 +11,7 @@ export default [
   route('blog', 'routes/blog._index.tsx'),
   route('blog/:slug', 'routes/blog.$slug.tsx'),
   route('about', 'routes/about.tsx'),
+  route('profile', 'routes/profile.tsx'),
   route('login', 'routes/login.tsx'),
   route('signup', 'routes/signup.tsx'),
   route('sitemap.xml', 'routes/sitemap.tsx'),

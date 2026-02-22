@@ -96,6 +96,41 @@ export async function getHallOfFame() {
   return data || [];
 }
 
+export async function getUserStats(userId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('solves')
+    .select('difficulty, solve_time_seconds')
+    .eq('user_id', userId)
+    .order('solve_time_seconds', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching user stats:', error);
+    return [];
+  }
+
+  // Group by difficulty: best time + total solves
+  const grouped: Record<string, { bestTime: number; totalSolves: number }> = {};
+  for (const row of data || []) {
+    const d = row.difficulty;
+    if (!grouped[d]) {
+      grouped[d] = { bestTime: row.solve_time_seconds, totalSolves: 0 };
+    }
+    grouped[d].totalSolves++;
+    if (row.solve_time_seconds < grouped[d].bestTime) {
+      grouped[d].bestTime = row.solve_time_seconds;
+    }
+  }
+
+  return Object.entries(grouped).map(([difficulty, stats]) => ({
+    difficulty,
+    bestTime: stats.bestTime,
+    totalSolves: stats.totalSolves,
+  }));
+}
+
 export async function updateProfile(userId: string, updates: Record<string, unknown>) {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
