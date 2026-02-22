@@ -76,21 +76,23 @@ export default function Profile() {
     setSavingColor(true);
     try {
       const token = await getToken();
-      if (token) {
-        const res = await fetch('/api/profile/update', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ avatar_color: color }),
-        });
-        if (res.ok) {
-          await refreshProfile();
-          addToast('Avatar color updated!', 'success');
-        } else {
-          addToast('Failed to update avatar color.', 'error');
-        }
+      if (!token) {
+        addToast('Session expired. Please sign in again.', 'error');
+        return;
+      }
+      const res = await fetch('/api/profile/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ avatar_color: color }),
+      });
+      if (res.ok) {
+        await refreshProfile();
+        addToast('Avatar color updated!', 'success');
+      } else {
+        addToast('Failed to update avatar color.', 'error');
       }
     } catch {
       addToast('Network error. Please try again.', 'error');

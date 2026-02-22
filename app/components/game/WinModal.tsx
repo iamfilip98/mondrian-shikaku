@@ -102,7 +102,9 @@ export default function WinModal({
 
               {/* Badges row */}
               <div className="flex items-center justify-center gap-2 mb-6 flex-wrap">
-                <Badge difficulty={difficulty} />
+                {!['Daily', 'Weekly', 'Monthly'].includes(puzzleType) && (
+                  <Badge difficulty={difficulty} />
+                )}
                 {hintsUsed > 0 && (
                   <span
                     className="inline-flex items-center px-3 py-1 border-2 border-[var(--color-border)]"

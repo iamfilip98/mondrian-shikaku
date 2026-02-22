@@ -71,7 +71,7 @@ export default function Daily() {
               color: 'var(--color-text-muted)',
             }}
           >
-            Daily Puzzle · 10×10 · Medium
+            Daily Puzzle · 10×10
           </p>
         </div>
         <div className="flex items-center gap-2 mt-2 md:mt-0">

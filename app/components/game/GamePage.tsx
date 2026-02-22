@@ -136,7 +136,10 @@ export default function GamePage({
 
     (async () => {
       const token = await getToken();
-      if (!token) return;
+      if (!token) {
+        addToast('Could not save your solve. Please sign in again.', 'error');
+        return;
+      }
 
       const payload = {
         puzzleType: puzzleTypeKey,

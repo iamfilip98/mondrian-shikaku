@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useUser, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { getProfile } from '~/lib/supabase/queries';
 
@@ -84,8 +84,13 @@ export function useAuth() {
     setProfile(null);
   }, [clerkSignOut]);
 
+  const stableUser = useMemo(
+    () => (isSignedIn && user ? { id: user.id } : null),
+    [isSignedIn, user?.id]
+  );
+
   return {
-    user: isSignedIn && user ? { id: user.id } : null,
+    user: stableUser,
     profile,
     profileError,
     loading: !isLoaded,

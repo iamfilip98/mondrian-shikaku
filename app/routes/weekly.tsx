@@ -114,7 +114,7 @@ export default function Weekly() {
               color: 'var(--color-text-muted)',
             }}
           >
-            Weekly Puzzle · 20×20 · Expert
+            Weekly Puzzle · 20×20
           </p>
         </div>
         <div className="flex items-center gap-2 mt-2 md:mt-0">

@@ -121,7 +121,7 @@ export default function Monthly() {
               color: 'var(--color-text-muted)',
             }}
           >
-            Monthly Puzzle · 40×40 · Nightmare
+            Monthly Puzzle · 40×40
           </p>
         </div>
         <div className="flex items-center gap-2 mt-2 md:mt-0">
