@@ -135,10 +135,17 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
   const height =
     config.height || seededRandInt(diffConfig.minGrid, diffConfig.maxGrid, rng);
 
+  const totalCells = width * height;
+  const isLargeGrid = totalCells > 300;
+
   let bestPuzzle: Puzzle | null = null;
   let attempts = 0;
-  const maxAttempts = 8;
-  let relaxFactor = 1.0;
+  const maxAttempts = isLargeGrid ? 4 : 8;
+  let relaxFactor = isLargeGrid ? 1.5 : 1.0;
+
+  // For large grids, skip uniqueness check (too expensive) and use lower node cap
+  const checkUniqueness = !isLargeGrid;
+  const solverNodeCap = isLargeGrid ? 10000 : 50000;
 
   while (attempts < maxAttempts) {
     const seedSuffix = attempts > 0 ? `+${attempts}` : '';
@@ -168,10 +175,15 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
 
     // Step 2: Place clues
     const clues = placeClues(rects, attemptRng);
-
-    // Step 3: Verify uniqueness
     const puzzle: Puzzle = { width, height, clues, solution: rects };
-    const result = solve(puzzle);
+
+    // For large grids, skip solver — partition guarantees a valid solution
+    if (isLargeGrid) {
+      return puzzle;
+    }
+
+    // Step 3: Verify solvability and uniqueness for smaller grids
+    const result = solve(puzzle, checkUniqueness, solverNodeCap);
 
     if (!result.solution) {
       attempts++;
@@ -194,7 +206,7 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
     }
 
     attempts++;
-    if (attempts >= 5) relaxFactor = 1.5;
+    if (attempts >= 3) relaxFactor = 1.5;
   }
 
   // Return best attempt or generate a simple fallback

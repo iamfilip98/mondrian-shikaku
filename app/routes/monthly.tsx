@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
-import { getMonthlyPuzzle, getTimeUntilFirstOfMonth } from '~/lib/puzzle/scheduled';
+import { getTimeUntilFirstOfMonth } from '~/lib/puzzle/scheduled';
+import { generatePuzzleAsync } from '~/lib/puzzle/generateAsync';
 import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
 import GamePage from '~/components/game/GamePage';
@@ -24,26 +25,65 @@ export function meta() {
 export default function Monthly() {
   const navigate = useNavigate();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const [error, setError] = useState(false);
   const [monthStr, setMonthStr] = useState('');
   const [seedStr, setSeedStr] = useState('');
 
   useEffect(() => {
     const now = new Date();
-    setSeedStr(`monthly-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
+    const seed = `monthly-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    setSeedStr(seed);
     setMonthStr(
       now.toLocaleDateString('en-US', {
         month: 'long',
         year: 'numeric',
       })
     );
-    try {
-      setPuzzle(getMonthlyPuzzle(now));
-    } catch {
-      try { setPuzzle(getMonthlyPuzzle(now)); } catch {}
-    }
+
+    let cancelled = false;
+    generatePuzzleAsync({
+      width: 40,
+      height: 40,
+      difficulty: 'nightmare',
+      seed,
+    })
+      .then((p) => { if (!cancelled) setPuzzle(p); })
+      .catch(() => { if (!cancelled) setError(true); });
+
+    return () => { cancelled = true; };
   }, []);
 
   const handleNextPuzzle = useCallback(() => navigate('/play'), [navigate]);
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4" style={{ height: '60vh' }}>
+        <span
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-lg)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          Failed to generate puzzle. Please refresh the page.
+        </span>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            padding: '8px 20px',
+            border: '2px solid var(--color-border)',
+            background: 'var(--color-surface)',
+            color: 'var(--color-text)',
+            cursor: 'pointer',
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (!puzzle) {
     return (

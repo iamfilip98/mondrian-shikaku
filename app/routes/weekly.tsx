@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { getISOWeek } from 'date-fns';
-import { getWeeklyPuzzle, getTimeUntilMondayUTC } from '~/lib/puzzle/scheduled';
+import { getTimeUntilMondayUTC } from '~/lib/puzzle/scheduled';
+import { generatePuzzleAsync } from '~/lib/puzzle/generateAsync';
 import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
 import GamePage from '~/components/game/GamePage';
@@ -21,22 +22,61 @@ export function meta() {
 export default function Weekly() {
   const navigate = useNavigate();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
+  const [error, setError] = useState(false);
   const [week, setWeek] = useState(0);
   const [year, setYear] = useState(0);
 
   useEffect(() => {
     const now = new Date();
-    setWeek(getISOWeek(now));
-    setYear(now.getFullYear());
-    try {
-      setPuzzle(getWeeklyPuzzle(now));
-    } catch {
-      // Retry with a simpler generation if first attempt fails
-      try { setPuzzle(getWeeklyPuzzle(now)); } catch {}
-    }
+    const w = getISOWeek(now);
+    const y = now.getFullYear();
+    setWeek(w);
+    setYear(y);
+
+    let cancelled = false;
+    generatePuzzleAsync({
+      width: 20,
+      height: 20,
+      difficulty: 'expert',
+      seed: `weekly-${y}-W${String(w).padStart(2, '0')}`,
+    })
+      .then((p) => { if (!cancelled) setPuzzle(p); })
+      .catch(() => { if (!cancelled) setError(true); });
+
+    return () => { cancelled = true; };
   }, []);
 
   const handleNextPuzzle = useCallback(() => navigate('/play'), [navigate]);
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4" style={{ height: '60vh' }}>
+        <span
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-lg)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          Failed to generate puzzle. Please refresh the page.
+        </span>
+        <button
+          onClick={() => window.location.reload()}
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            padding: '8px 20px',
+            border: '2px solid var(--color-border)',
+            background: 'var(--color-surface)',
+            color: 'var(--color-text)',
+            cursor: 'pointer',
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (!puzzle) {
     return (

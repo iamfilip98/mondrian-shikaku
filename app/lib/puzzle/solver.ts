@@ -88,7 +88,7 @@ function rectContainsClue(rect: GridRect, clue: Clue): boolean {
   );
 }
 
-export function solve(puzzle: Puzzle, findAll = true): SolverResult {
+export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverResult {
   const { width, height, clues } = puzzle;
 
   // Initialize grid
@@ -103,6 +103,7 @@ export function solve(puzzle: Puzzle, findAll = true): SolverResult {
     backtracks: 0,
   };
 
+  let nodeCount = 0;
   const solutions: GridRect[][] = [];
   const maxSolutions = findAll ? 2 : 1;
 
@@ -140,6 +141,9 @@ export function solve(puzzle: Puzzle, findAll = true): SolverResult {
   }
 
   function backtrack(): void {
+    nodeCount++;
+    if (nodeCount > maxNodes) return;
+
     // Save state for restore
     const savedPlacedLen = state.placed.length;
     const savedResolved = [...state.clueResolved];
@@ -215,7 +219,7 @@ export function solve(puzzle: Puzzle, findAll = true): SolverResult {
     });
 
     for (const candidate of candidates) {
-      if (solutions.length >= maxSolutions) break;
+      if (solutions.length >= maxSolutions || nodeCount > maxNodes) break;
 
       // Save state before trying
       const innerSavedLen = state.placed.length;
