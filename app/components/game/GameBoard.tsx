@@ -241,7 +241,13 @@ export default memo(function GameBoard({
 
       {/* Layer 6: Clue numbers */}
       {puzzle.clues.map((clue, i) => {
-        const isCovered = coverageMap.has(`${clue.row}-${clue.col}`);
+        const coveredIdx = coverageMap.get(`${clue.row}-${clue.col}`);
+        const isCovered = coveredIdx !== undefined;
+        const coveredColor = isCovered ? placed[coveredIdx].color : null;
+        const isLightBg = coveredColor === 'var(--color-yellow)';
+        const clueFill = isCovered
+          ? isLightBg ? 'var(--color-black)' : 'var(--color-white)'
+          : 'var(--color-text)';
         return (
           <text
             key={`clue-${i}`}
@@ -257,7 +263,7 @@ export default memo(function GameBoard({
               fontWeight: 700,
               fontSize: `clamp(10px, ${cellSize * 0.42}px, 22px)`,
               fontVariantNumeric: 'tabular-nums',
-              fill: 'var(--color-text)',
+              fill: clueFill,
               pointerEvents: 'none',
               userSelect: 'none',
             }}
