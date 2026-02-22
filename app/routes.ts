@@ -16,4 +16,8 @@ export default [
   route('signup', 'routes/signup.tsx'),
   route('sitemap.xml', 'routes/sitemap.tsx'),
   route('robots.txt', 'routes/robots.tsx'),
+  route('api/solve', 'routes/api.solve.tsx'),
+  route('api/profile/create', 'routes/api.profile.create.tsx'),
+  route('api/profile/update', 'routes/api.profile.update.tsx'),
+  route('api/cron/archive-hof', 'routes/api.cron.archive-hof.tsx'),
 ] satisfies RouteConfig;
