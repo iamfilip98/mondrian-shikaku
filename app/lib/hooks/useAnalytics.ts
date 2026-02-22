@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { useLocation } from 'react-router';
-import type { PostHog } from 'posthog-js';
 import {
   initAnalytics,
   trackPageView,
@@ -9,14 +8,13 @@ import {
 } from '~/lib/analytics';
 import type { Profile } from '~/lib/hooks/useAuth';
 
-export { PostHogProvider } from 'posthog-js/react';
-
-export function usePostHogInit(): PostHog | undefined {
-  const clientRef = useRef<PostHog | null>(null);
-  if (clientRef.current === null) {
-    clientRef.current = initAnalytics() ?? undefined ?? null;
-  }
-  return clientRef.current ?? undefined;
+export function usePostHogInit() {
+  const initedRef = useRef(false);
+  useEffect(() => {
+    if (initedRef.current) return;
+    initedRef.current = true;
+    initAnalytics();
+  }, []);
 }
 
 export function usePageView() {

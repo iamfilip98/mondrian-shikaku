@@ -1,15 +1,16 @@
-import posthog from 'posthog-js';
 import type { PostHog } from 'posthog-js';
 
 let client: PostHog | null = null;
 
-export function initAnalytics(): PostHog | null {
+export async function initAnalytics(): Promise<PostHog | null> {
   if (typeof window === 'undefined') return null;
   if (client) return client;
 
   const key = import.meta.env.VITE_POSTHOG_KEY;
   const host = import.meta.env.VITE_POSTHOG_HOST;
   if (!key) return null;
+
+  const { default: posthog } = await import('posthog-js');
 
   posthog.init(key, {
     api_host: host || 'https://us.i.posthog.com',
@@ -23,24 +24,21 @@ export function initAnalytics(): PostHog | null {
 }
 
 export function trackEvent(name: string, props?: Record<string, unknown>) {
-  if (typeof window === 'undefined') return;
-  posthog.capture(name, props);
+  client?.capture(name, props);
 }
 
 export function identifyUser(
   userId: string,
   traits?: Record<string, unknown>,
 ) {
-  if (typeof window === 'undefined') return;
-  posthog.identify(userId, traits);
+  client?.identify(userId, traits);
 }
 
 export function resetAnalytics() {
-  if (typeof window === 'undefined') return;
-  posthog.reset();
+  client?.reset();
 }
 
 export function trackPageView(path: string) {
   if (typeof window === 'undefined') return;
-  posthog.capture('$pageview', { $current_url: window.origin + path });
+  client?.capture('$pageview', { $current_url: window.origin + path });
 }
