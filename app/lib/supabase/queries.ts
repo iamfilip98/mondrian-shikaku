@@ -125,9 +125,29 @@ export async function getUserScheduledSolves(userId: string, seeds: string[]): P
     .from('solves')
     .select('puzzle_seed')
     .eq('user_id', userId)
-    .in('puzzle_seed', seeds);
+    .in('puzzle_seed', seeds)
+    .in('puzzle_type', ['daily', 'weekly', 'monthly']);
 
   return (data || []).map(r => r.puzzle_seed);
+}
+
+export interface SolveResult {
+  solve_time_seconds: number;
+  hints_used: number;
+}
+
+export async function getUserSolveForSeed(userId: string, seed: string): Promise<SolveResult | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+
+  const { data } = await supabase
+    .from('solves')
+    .select('solve_time_seconds, hints_used')
+    .eq('user_id', userId)
+    .eq('puzzle_seed', seed)
+    .single();
+
+  return data || null;
 }
 
 export async function getProfile(userId: string) {

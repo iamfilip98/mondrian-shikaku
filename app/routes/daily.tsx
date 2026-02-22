@@ -1,9 +1,12 @@
-import { useCallback } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useNavigate, useLoaderData } from 'react-router';
 import { getDailyPuzzle, getTimeUntilMidnightUTC } from '~/lib/puzzle/scheduled';
 import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
 import GamePage from '~/components/game/GamePage';
+import ScheduledComplete from '~/components/game/ScheduledComplete';
+import { useAuth } from '~/lib/hooks/useAuth';
+import { getUserSolveForSeed, type SolveResult } from '~/lib/supabase/queries';
 
 export function meta() {
   const today = new Date().toISOString().slice(0, 10);
@@ -26,8 +29,26 @@ export function loader() {
 export default function Daily() {
   const navigate = useNavigate();
   const { puzzle, dateStr } = useLoaderData<typeof loader>();
+  const { user } = useAuth();
+  const [existingSolve, setExistingSolve] = useState<SolveResult | null>(null);
+  const [checked, setChecked] = useState(false);
+
+  const seed = `daily-${dateStr}`;
+
+  useEffect(() => {
+    if (!user) {
+      setChecked(true);
+      return;
+    }
+    getUserSolveForSeed(user.id, seed).then((solve) => {
+      setExistingSolve(solve);
+      setChecked(true);
+    });
+  }, [user, seed]);
 
   const handleNextPuzzle = useCallback(() => navigate('/play'), [navigate]);
+
+  if (!checked) return null;
 
   return (
     <div>
@@ -72,13 +93,22 @@ export default function Daily() {
           <Countdown targetMs={getTimeUntilMidnightUTC()} />
         </div>
       </div>
-      <GamePage
-        puzzle={puzzle}
-        difficulty="medium"
-        puzzleType="Daily"
-        puzzleSeed={`daily-${dateStr}`}
-        onNextPuzzle={handleNextPuzzle}
-      />
+      {existingSolve ? (
+        <ScheduledComplete
+          solveTime={existingSolve.solve_time_seconds}
+          hintsUsed={existingSolve.hints_used}
+          nextPuzzleMs={getTimeUntilMidnightUTC()}
+          nextLabel="Next daily in"
+        />
+      ) : (
+        <GamePage
+          puzzle={puzzle}
+          difficulty="medium"
+          puzzleType="Daily"
+          puzzleSeed={seed}
+          onNextPuzzle={handleNextPuzzle}
+        />
+      )}
     </div>
   );
 }

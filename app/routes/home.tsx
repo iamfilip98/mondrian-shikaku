@@ -183,9 +183,9 @@ export default function Home() {
       <section className="w-full border-y-[3px] border-[var(--color-border)]">
         <div className="grid grid-cols-3">
           {[
-            { name: 'Daily', grid: '10×10', href: '/daily', getMs: getTimeUntilMidnightUTC, seed: currentSeeds.daily },
-            { name: 'Weekly', grid: '20×20', href: '/weekly', getMs: getTimeUntilMondayUTC, seed: currentSeeds.weekly },
-            { name: 'Monthly', grid: '40×40', href: '/monthly', getMs: getTimeUntilFirstOfMonth, seed: currentSeeds.monthly },
+            { name: 'Daily', grid: '10×10', href: '/daily', getMs: getTimeUntilMidnightUTC, seed: currentSeeds.daily, colorClass: '!bg-[var(--color-red)] !text-[var(--color-white)]' },
+            { name: 'Weekly', grid: '20×20', href: '/weekly', getMs: getTimeUntilMondayUTC, seed: currentSeeds.weekly, colorClass: '!bg-[var(--color-blue)] !text-[var(--color-white)]' },
+            { name: 'Monthly', grid: '40×40', href: '/monthly', getMs: getTimeUntilFirstOfMonth, seed: currentSeeds.monthly, colorClass: '!bg-[var(--color-yellow)] !text-[var(--color-black)]' },
           ].map((p, i) => {
             const completed = completedSeeds.has(p.seed);
             return (
@@ -201,7 +201,7 @@ export default function Home() {
                 </span>
                 <Countdown targetMs={p.getMs()} className="mb-4" />
                 <Link to={p.href}>
-                  <Button variant="outline" size="sm">{completed ? 'View Board' : 'Play Now'}</Button>
+                  <Button variant="outline" size="sm" className={completed ? p.colorClass : ''}>{completed ? 'Solved' : 'Play Now'}</Button>
                 </Link>
               </div>
             );

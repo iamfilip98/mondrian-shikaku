@@ -5,6 +5,9 @@ import { generatePuzzleAsync } from '~/lib/puzzle/generateAsync';
 import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
 import GamePage from '~/components/game/GamePage';
+import ScheduledComplete from '~/components/game/ScheduledComplete';
+import { useAuth } from '~/lib/hooks/useAuth';
+import { getUserSolveForSeed, type SolveResult } from '~/lib/supabase/queries';
 
 export function meta() {
   const now = new Date();
@@ -24,10 +27,13 @@ export function meta() {
 
 export default function Monthly() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [error, setError] = useState(false);
   const [monthStr, setMonthStr] = useState('');
   const [seedStr, setSeedStr] = useState('');
+  const [existingSolve, setExistingSolve] = useState<SolveResult | null>(null);
+  const [solveChecked, setSolveChecked] = useState(false);
 
   useEffect(() => {
     const now = new Date();
@@ -40,6 +46,15 @@ export default function Monthly() {
       })
     );
 
+    if (user) {
+      getUserSolveForSeed(user.id, seed).then((solve) => {
+        setExistingSolve(solve);
+        setSolveChecked(true);
+      });
+    } else {
+      setSolveChecked(true);
+    }
+
     let cancelled = false;
     generatePuzzleAsync({
       width: 40,
@@ -51,7 +66,7 @@ export default function Monthly() {
       .catch(() => { if (!cancelled) setError(true); });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [user]);
 
   const handleNextPuzzle = useCallback(() => navigate('/play'), [navigate]);
 
@@ -85,7 +100,7 @@ export default function Monthly() {
     );
   }
 
-  if (!puzzle) {
+  if (!solveChecked || (!existingSolve && !puzzle)) {
     return (
       <div className="flex items-center justify-center" style={{ height: '60vh' }}>
         <span
@@ -95,7 +110,7 @@ export default function Monthly() {
             color: 'var(--color-text-muted)',
           }}
         >
-          Generating puzzle...
+          {existingSolve ? '' : 'Generating puzzle...'}
         </span>
       </div>
     );
@@ -139,13 +154,22 @@ export default function Monthly() {
           <Countdown targetMs={getTimeUntilFirstOfMonth()} />
         </div>
       </div>
-      <GamePage
-        puzzle={puzzle}
-        difficulty="nightmare"
-        puzzleType="Monthly"
-        puzzleSeed={seedStr}
-        onNextPuzzle={handleNextPuzzle}
-      />
+      {existingSolve ? (
+        <ScheduledComplete
+          solveTime={existingSolve.solve_time_seconds}
+          hintsUsed={existingSolve.hints_used}
+          nextPuzzleMs={getTimeUntilFirstOfMonth()}
+          nextLabel="Next monthly in"
+        />
+      ) : (
+        <GamePage
+          puzzle={puzzle!}
+          difficulty="nightmare"
+          puzzleType="Monthly"
+          puzzleSeed={seedStr}
+          onNextPuzzle={handleNextPuzzle}
+        />
+      )}
     </div>
   );
 }

@@ -6,6 +6,9 @@ import { generatePuzzleAsync } from '~/lib/puzzle/generateAsync';
 import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
 import GamePage from '~/components/game/GamePage';
+import ScheduledComplete from '~/components/game/ScheduledComplete';
+import { useAuth } from '~/lib/hooks/useAuth';
+import { getUserSolveForSeed, type SolveResult } from '~/lib/supabase/queries';
 
 export function meta() {
   const now = new Date();
@@ -21,10 +24,13 @@ export function meta() {
 
 export default function Weekly() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [error, setError] = useState(false);
   const [week, setWeek] = useState(0);
   const [year, setYear] = useState(0);
+  const [existingSolve, setExistingSolve] = useState<SolveResult | null>(null);
+  const [solveChecked, setSolveChecked] = useState(false);
 
   useEffect(() => {
     const now = new Date();
@@ -33,18 +39,29 @@ export default function Weekly() {
     setWeek(w);
     setYear(y);
 
+    const seed = `weekly-${y}-W${String(w).padStart(2, '0')}`;
+
+    if (user) {
+      getUserSolveForSeed(user.id, seed).then((solve) => {
+        setExistingSolve(solve);
+        setSolveChecked(true);
+      });
+    } else {
+      setSolveChecked(true);
+    }
+
     let cancelled = false;
     generatePuzzleAsync({
       width: 20,
       height: 20,
       difficulty: 'expert',
-      seed: `weekly-${y}-W${String(w).padStart(2, '0')}`,
+      seed,
     })
       .then((p) => { if (!cancelled) setPuzzle(p); })
       .catch(() => { if (!cancelled) setError(true); });
 
     return () => { cancelled = true; };
-  }, []);
+  }, [user]);
 
   const handleNextPuzzle = useCallback(() => navigate('/play'), [navigate]);
 
@@ -78,7 +95,7 @@ export default function Weekly() {
     );
   }
 
-  if (!puzzle) {
+  if (!solveChecked || (!existingSolve && !puzzle)) {
     return (
       <div className="flex items-center justify-center" style={{ height: '60vh' }}>
         <span
@@ -88,7 +105,7 @@ export default function Weekly() {
             color: 'var(--color-text-muted)',
           }}
         >
-          Generating puzzle...
+          {existingSolve ? '' : 'Generating puzzle...'}
         </span>
       </div>
     );
@@ -132,13 +149,22 @@ export default function Weekly() {
           <Countdown targetMs={getTimeUntilMondayUTC()} />
         </div>
       </div>
-      <GamePage
-        puzzle={puzzle}
-        difficulty="expert"
-        puzzleType="Weekly"
-        puzzleSeed={`weekly-${year}-W${String(week).padStart(2, '0')}`}
-        onNextPuzzle={handleNextPuzzle}
-      />
+      {existingSolve ? (
+        <ScheduledComplete
+          solveTime={existingSolve.solve_time_seconds}
+          hintsUsed={existingSolve.hints_used}
+          nextPuzzleMs={getTimeUntilMondayUTC()}
+          nextLabel="Next weekly in"
+        />
+      ) : (
+        <GamePage
+          puzzle={puzzle!}
+          difficulty="expert"
+          puzzleType="Weekly"
+          puzzleSeed={`weekly-${year}-W${String(week).padStart(2, '0')}`}
+          onNextPuzzle={handleNextPuzzle}
+        />
+      )}
     </div>
   );
 }
