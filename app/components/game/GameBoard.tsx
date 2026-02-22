@@ -55,13 +55,14 @@ export default memo(function GameBoard({
       const rect = svg.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      const col = Math.floor(x / cellSize);
-      const row = Math.floor(y / cellSize);
+      // Use visual size from bounding rect to stay accurate under zoom transforms
+      const col = Math.floor((x / rect.width) * puzzle.width);
+      const row = Math.floor((y / rect.height) * puzzle.height);
       if (row < 0 || row >= puzzle.height || col < 0 || col >= puzzle.width)
         return null;
       return { row, col };
     },
-    [cellSize, puzzle.width, puzzle.height]
+    [puzzle.width, puzzle.height]
   );
 
   return (

@@ -439,7 +439,9 @@ export default function GamePage({
           initialScale={1}
           minScale={0.3}
           maxScale={3}
-          centerOnInit
+          centerOnInit={false}
+          initialPositionX={typeof window !== 'undefined' ? -((svgWidth - (window.innerWidth - 32)) / 2) : 0}
+          initialPositionY={0}
           doubleClick={{ disabled: true }}
           onPinchingStart={() => {
             isPinchingRef.current = true;
@@ -453,7 +455,13 @@ export default function GamePage({
             }, 100);
           }}
         >
-          <TransformComponent>
+          <TransformComponent
+            wrapperStyle={{
+              maxHeight: typeof window !== 'undefined' ? `${Math.floor(window.innerHeight * 0.7)}px` : undefined,
+              width: '100%',
+              touchAction: 'none',
+            }}
+          >
             {boardContent}
           </TransformComponent>
         </TransformWrapper>
