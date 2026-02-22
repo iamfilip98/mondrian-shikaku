@@ -54,7 +54,7 @@ export function useSettingsSync() {
       timer = setTimeout(async () => {
         try {
           const token = await getToken();
-          if (!token) return;
+          if (!token) return; // silently skip — session may not be ready yet
 
           const res = await fetch('/api/profile/update', {
             method: 'POST',
@@ -69,9 +69,11 @@ export function useSettingsSync() {
               show_timer: localStorage.getItem('showTimer') !== 'false',
             }),
           });
-          if (!res.ok) throw new Error();
+          if (!res.ok) {
+            console.warn('Settings sync failed:', res.status);
+          }
         } catch {
-          addToast('Settings sync failed. Changes saved locally.', 'error');
+          // Network error — settings are already saved locally, no need to alarm the user
         }
       }, 1500);
     };

@@ -56,9 +56,7 @@ export default function GamePage({
   const isDraggingRef = useRef(false);
   const dragCellRef = useRef<{ row: number; col: number } | null>(null);
 
-  // Remove confirmation state
-  const [removeHighlight, setRemoveHighlight] = useState<number | null>(null);
-  const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // (removal is now single-tap; undo is the safety net)
 
   // Multi-pointer / pinch tracking
   const activePointersRef = useRef(new Set<number>());
@@ -293,27 +291,14 @@ export default function GamePage({
         return;
       }
 
-      // Handle deferred rectangle removal
+      // Handle deferred rectangle removal (single tap)
       if (pendingRemovalRef.current) {
         const pr = pendingRemovalRef.current;
         pendingRemovalRef.current = null;
         const dx = e.clientX - pr.x;
         const dy = e.clientY - pr.y;
-        if (Math.hypot(dx, dy) < 10) {
-          const percent = gameState.completionPercent;
-          if (percent < 0.5) {
-            gameState.removeRect(pr.index);
-          } else {
-            if (removeHighlight === pr.index) {
-              gameState.removeRect(pr.index);
-              setRemoveHighlight(null);
-              if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
-            } else {
-              setRemoveHighlight(pr.index);
-              if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
-              removeTimerRef.current = setTimeout(() => setRemoveHighlight(null), 2000);
-            }
-          }
+        if (Math.hypot(dx, dy) < 16) {
+          gameState.removeRect(pr.index);
         }
         return;
       }
@@ -386,7 +371,7 @@ export default function GamePage({
       isDraggingRef.current = false;
       dragCellRef.current = null;
     },
-    [gameState, sound, removeHighlight, cancelInteraction]
+    [gameState, sound, cancelInteraction]
   );
 
   // Rectangle removal is now handled via pointerDown/pointerUp with threshold

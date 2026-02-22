@@ -164,7 +164,7 @@ export default function Home() {
       </section>
 
       {/* Scheduled Puzzles Strip */}
-      <section className="w-full border-b-[3px] border-[var(--color-border)]">
+      <section className="w-full border-y-[3px] border-[var(--color-border)]">
         <div className="grid grid-cols-3">
           {[
             { name: 'Daily', grid: '10×10', href: '/daily', getMs: getTimeUntilMidnightUTC },
