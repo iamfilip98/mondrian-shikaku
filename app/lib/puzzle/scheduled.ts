@@ -29,6 +29,15 @@ export function getMonthlyPuzzle(date: Date): Puzzle {
   });
 }
 
+export function getCurrentScheduledSeeds(): { daily: string; weekly: string; monthly: string } {
+  const now = new Date();
+  return {
+    daily: `daily-${now.toISOString().slice(0, 10)}`,
+    weekly: `weekly-${now.getFullYear()}-W${String(getISOWeek(now)).padStart(2, '0')}`,
+    monthly: `monthly-${now.toISOString().slice(0, 7)}`,
+  };
+}
+
 export function getTimeUntilMidnightUTC(): number {
   const now = new Date();
   const tomorrow = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));

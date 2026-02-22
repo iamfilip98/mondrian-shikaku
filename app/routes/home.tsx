@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router';
 import { motion } from 'framer-motion';
 import Button from '~/components/ui/Button';
@@ -7,7 +8,9 @@ import {
   getTimeUntilMidnightUTC,
   getTimeUntilMondayUTC,
   getTimeUntilFirstOfMonth,
+  getCurrentScheduledSeeds,
 } from '~/lib/puzzle/scheduled';
+import { getUserScheduledSolves } from '~/lib/supabase/queries';
 
 export function meta() {
   return [
@@ -48,7 +51,20 @@ const demoRects = [
 ];
 
 export default function Home() {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
+  const [completedSeeds, setCompletedSeeds] = useState<Set<string>>(new Set());
+
+  const currentSeeds = useMemo(() => getCurrentScheduledSeeds(), []);
+
+  useEffect(() => {
+    if (!user) {
+      setCompletedSeeds(new Set());
+      return;
+    }
+    getUserScheduledSolves(user.id, Object.values(currentSeeds)).then(solved => {
+      setCompletedSeeds(new Set(solved));
+    });
+  }, [user, currentSeeds]);
 
   return (
     <div>
@@ -167,26 +183,29 @@ export default function Home() {
       <section className="w-full border-y-[3px] border-[var(--color-border)]">
         <div className="grid grid-cols-3">
           {[
-            { name: 'Daily', grid: '10×10', href: '/daily', getMs: getTimeUntilMidnightUTC },
-            { name: 'Weekly', grid: '20×20', href: '/weekly', getMs: getTimeUntilMondayUTC },
-            { name: 'Monthly', grid: '40×40', href: '/monthly', getMs: getTimeUntilFirstOfMonth },
-          ].map((p, i) => (
-            <div
-              key={p.name}
-              className={`flex flex-col items-center justify-center py-8 px-4 ${i < 2 ? 'border-r-[3px] border-[var(--color-border)]' : ''}`}
-            >
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-2xl)', color: 'var(--color-text)' }}>
-                {p.name}
-              </span>
-              <span className="mt-1 mb-2" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
-                {p.grid}
-              </span>
-              <Countdown targetMs={p.getMs()} className="mb-4" />
-              <Link to={p.href}>
-                <Button variant="outline" size="sm">Play Now</Button>
-              </Link>
-            </div>
-          ))}
+            { name: 'Daily', grid: '10×10', href: '/daily', getMs: getTimeUntilMidnightUTC, seed: currentSeeds.daily },
+            { name: 'Weekly', grid: '20×20', href: '/weekly', getMs: getTimeUntilMondayUTC, seed: currentSeeds.weekly },
+            { name: 'Monthly', grid: '40×40', href: '/monthly', getMs: getTimeUntilFirstOfMonth, seed: currentSeeds.monthly },
+          ].map((p, i) => {
+            const completed = completedSeeds.has(p.seed);
+            return (
+              <div
+                key={p.name}
+                className={`flex flex-col items-center justify-center py-8 px-4 ${i < 2 ? 'border-r-[3px] border-[var(--color-border)]' : ''}`}
+              >
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-2xl)', color: 'var(--color-text)' }}>
+                  {p.name}
+                </span>
+                <span className="mt-1 mb-2" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                  {p.grid}
+                </span>
+                <Countdown targetMs={p.getMs()} className="mb-4" />
+                <Link to={p.href}>
+                  <Button variant="outline" size="sm">{completed ? 'View Board' : 'Play Now'}</Button>
+                </Link>
+              </div>
+            );
+          })}
         </div>
       </section>
 

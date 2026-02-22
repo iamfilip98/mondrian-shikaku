@@ -117,6 +117,19 @@ export async function getUserStats(userId: string) {
   }));
 }
 
+export async function getUserScheduledSolves(userId: string, seeds: string[]): Promise<string[]> {
+  const supabase = getSupabaseClient();
+  if (!supabase || seeds.length === 0) return [];
+
+  const { data } = await supabase
+    .from('solves')
+    .select('puzzle_seed')
+    .eq('user_id', userId)
+    .in('puzzle_seed', seeds);
+
+  return (data || []).map(r => r.puzzle_seed);
+}
+
 export async function getProfile(userId: string) {
   const supabase = getSupabaseClient();
   if (!supabase) return null;
