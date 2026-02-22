@@ -23,6 +23,9 @@ export function meta() {
 const tabs = ['Daily', 'Weekly', 'Monthly', 'All-Time'] as const;
 type Tab = (typeof tabs)[number];
 
+const difficulties = ['primer', 'easy', 'medium', 'hard', 'expert', 'nightmare'] as const;
+type Difficulty = (typeof difficulties)[number];
+
 interface LeaderboardEntry {
   rank: number;
   username: string;
@@ -30,6 +33,7 @@ interface LeaderboardEntry {
   solveTime: number;
   hintsUsed: number;
   completedAt: string;
+  totalSolves?: number;
 }
 
 function mapEntries(data: any[]): LeaderboardEntry[] {
@@ -37,14 +41,27 @@ function mapEntries(data: any[]): LeaderboardEntry[] {
     rank: i + 1,
     username: row.username,
     avatarColor: row.avatar_color || '#D40920',
-    solveTime: row.solve_time_seconds ?? row.best_time ?? row.avg_time ?? 0,
+    solveTime: row.solve_time_seconds ?? 0,
     hintsUsed: row.hints_used ?? 0,
     completedAt: row.completed_at ?? '',
   }));
 }
 
+function mapAllTimeEntries(data: any[]): LeaderboardEntry[] {
+  return data.map((row, i) => ({
+    rank: i + 1,
+    username: row.username,
+    avatarColor: row.avatar_color || '#D40920',
+    solveTime: row.best_time ?? row.avg_time ?? 0,
+    hintsUsed: 0,
+    completedAt: '',
+    totalSolves: row.total_solves ?? 0,
+  }));
+}
+
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState<Tab>('Daily');
+  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const { profile } = useAuth();
@@ -53,7 +70,7 @@ export default function Leaderboard() {
     let cancelled = false;
     setLoading(true);
 
-    const fetch = async () => {
+    const fetchData = async () => {
       let data: any[] = [];
       switch (activeTab) {
         case 'Daily':
@@ -66,18 +83,20 @@ export default function Leaderboard() {
           data = await getMonthlyLeaderboard();
           break;
         case 'All-Time':
-          data = await getAllTimeLeaderboard();
+          data = await getAllTimeLeaderboard(difficulty);
           break;
       }
       if (!cancelled) {
-        setEntries(mapEntries(data));
+        setEntries(
+          activeTab === 'All-Time' ? mapAllTimeEntries(data) : mapEntries(data)
+        );
         setLoading(false);
       }
     };
 
-    fetch();
+    fetchData();
     return () => { cancelled = true; };
-  }, [activeTab]);
+  }, [activeTab, difficulty]);
 
   return (
     <div className="max-w-[800px] mx-auto px-6 py-12">
@@ -126,6 +145,31 @@ export default function Leaderboard() {
         ))}
       </div>
 
+      {/* Difficulty filter for All-Time */}
+      {activeTab === 'All-Time' && (
+        <div className="flex flex-wrap gap-2 mb-6">
+          {difficulties.map((d) => (
+            <button
+              key={d}
+              onClick={() => setDifficulty(d)}
+              className="cursor-pointer"
+              style={{
+                padding: '6px 14px',
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--text-xs)',
+                fontWeight: difficulty === d ? 500 : 400,
+                color: difficulty === d ? 'var(--color-text-inverse)' : 'var(--color-text)',
+                backgroundColor: difficulty === d ? 'var(--color-border)' : 'transparent',
+                border: '1.5px solid var(--color-border)',
+                textTransform: 'capitalize',
+              }}
+            >
+              {d}
+            </button>
+          ))}
+        </div>
+      )}
+
       {loading ? (
         <div
           className="flex items-center justify-center py-12"
@@ -138,7 +182,11 @@ export default function Leaderboard() {
           Loading...
         </div>
       ) : (
-        <LeaderboardTable entries={entries} currentUser={profile?.username} />
+        <LeaderboardTable
+          entries={entries}
+          currentUser={profile?.username}
+          allTime={activeTab === 'All-Time'}
+        />
       )}
     </div>
   );

@@ -7,12 +7,14 @@ interface LeaderboardEntry {
   solveTime: number;
   hintsUsed: number;
   completedAt: string;
+  totalSolves?: number;
 }
 
 interface LeaderboardTableProps {
   entries: LeaderboardEntry[];
   currentUser?: string;
   className?: string;
+  allTime?: boolean;
 }
 
 function formatTime(seconds: number): string {
@@ -25,6 +27,7 @@ export default function LeaderboardTable({
   entries,
   currentUser,
   className = '',
+  allTime = false,
 }: LeaderboardTableProps) {
   return (
     <div
@@ -46,8 +49,8 @@ export default function LeaderboardTable({
       >
         <span>#</span>
         <span>Player</span>
-        <span className="text-right">Time</span>
-        <span className="text-right">Hints</span>
+        <span className="text-right">{allTime ? 'Best' : 'Time'}</span>
+        <span className="text-right">{allTime ? 'Solves' : 'Hints'}</span>
       </div>
 
       {/* Rows */}
@@ -110,13 +113,14 @@ export default function LeaderboardTable({
                 className="text-right tabular-nums"
                 style={{
                   fontVariantNumeric: 'tabular-nums',
-                  color:
-                    entry.hintsUsed > 0
+                  color: allTime
+                    ? 'var(--color-text)'
+                    : entry.hintsUsed > 0
                       ? 'var(--color-text-muted)'
                       : 'var(--color-text)',
                 }}
               >
-                {entry.hintsUsed}
+                {allTime ? entry.totalSolves ?? 0 : entry.hintsUsed}
               </span>
             </motion.div>
           );
