@@ -123,19 +123,43 @@ export default memo(function GameBoard({
           })
         )}
 
-      {/* Layer 2: Placed rectangles */}
+      {/* Layer 2: Grid lines (below placed rects so colored boxes cover them) */}
+      {Array.from({ length: puzzle.height + 1 }, (_, i) => (
+        <line
+          key={`h-${i}`}
+          x1={0}
+          y1={i * cellSize}
+          x2={svgWidth}
+          y2={i * cellSize}
+          stroke="var(--color-grid-line)"
+          strokeWidth={1}
+        />
+      ))}
+      {Array.from({ length: puzzle.width + 1 }, (_, i) => (
+        <line
+          key={`v-${i}`}
+          x1={i * cellSize}
+          y1={0}
+          x2={i * cellSize}
+          y2={svgHeight}
+          stroke="var(--color-grid-line)"
+          strokeWidth={1}
+        />
+      ))}
+
+      {/* Layer 3: Placed rectangles */}
       {puzzle.width * puzzle.height > 225 ? (
         // Skip Framer Motion on large grids for performance
         placed.map((rect, idx) => (
           <rect
             key={`placed-${idx}-${rect.row}-${rect.col}`}
-            x={rect.col * cellSize + 1}
-            y={rect.row * cellSize + 1}
-            width={rect.width * cellSize - 2}
-            height={rect.height * cellSize - 2}
+            x={rect.col * cellSize}
+            y={rect.row * cellSize}
+            width={rect.width * cellSize}
+            height={rect.height * cellSize}
             fill={rect.color}
             stroke="var(--color-border)"
-            strokeWidth={3.5}
+            strokeWidth={5}
             style={{ cursor: 'pointer' }}
             onClick={(e) => {
               e.stopPropagation();
@@ -148,13 +172,13 @@ export default memo(function GameBoard({
           {placed.map((rect, idx) => (
             <motion.rect
               key={`placed-${idx}-${rect.row}-${rect.col}`}
-              x={rect.col * cellSize + 1}
-              y={rect.row * cellSize + 1}
-              width={rect.width * cellSize - 2}
-              height={rect.height * cellSize - 2}
+              x={rect.col * cellSize}
+              y={rect.row * cellSize}
+              width={rect.width * cellSize}
+              height={rect.height * cellSize}
               fill={rect.color}
               stroke="var(--color-border)"
-              strokeWidth={3.5}
+              strokeWidth={5}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -204,30 +228,6 @@ export default memo(function GameBoard({
         </>
       )}
 
-      {/* Layer 4: Grid lines */}
-      {Array.from({ length: puzzle.height + 1 }, (_, i) => (
-        <line
-          key={`h-${i}`}
-          x1={0}
-          y1={i * cellSize}
-          x2={svgWidth}
-          y2={i * cellSize}
-          stroke="var(--color-grid-line)"
-          strokeWidth={1.5}
-        />
-      ))}
-      {Array.from({ length: puzzle.width + 1 }, (_, i) => (
-        <line
-          key={`v-${i}`}
-          x1={i * cellSize}
-          y1={0}
-          x2={i * cellSize}
-          y2={svgHeight}
-          stroke="var(--color-grid-line)"
-          strokeWidth={1.5}
-        />
-      ))}
-
       {/* Layer 5: Outer border */}
       <rect
         x={0}
@@ -236,33 +236,36 @@ export default memo(function GameBoard({
         height={svgHeight}
         fill="none"
         stroke="var(--color-grid-border)"
-        strokeWidth={4}
+        strokeWidth={6}
       />
 
       {/* Layer 6: Clue numbers */}
-      {puzzle.clues.map((clue, i) => (
-        <text
-          key={`clue-${i}`}
-          x={clue.col * cellSize + cellSize / 2}
-          y={clue.row * cellSize + cellSize / 2}
-          textAnchor="middle"
-          dominantBaseline="central"
-          stroke="var(--color-grid-bg)"
-          strokeWidth={4}
-          paintOrder="stroke"
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontWeight: 700,
-            fontSize: `clamp(10px, ${cellSize * 0.42}px, 22px)`,
-            fontVariantNumeric: 'tabular-nums',
-            fill: 'var(--color-text)',
-            pointerEvents: 'none',
-            userSelect: 'none',
-          }}
-        >
-          {clue.value}
-        </text>
-      ))}
+      {puzzle.clues.map((clue, i) => {
+        const isCovered = coverageMap.has(`${clue.row}-${clue.col}`);
+        return (
+          <text
+            key={`clue-${i}`}
+            x={clue.col * cellSize + cellSize / 2}
+            y={clue.row * cellSize + cellSize / 2}
+            textAnchor="middle"
+            dominantBaseline="central"
+            stroke={isCovered ? "none" : "var(--color-grid-bg)"}
+            strokeWidth={isCovered ? 0 : 4}
+            paintOrder="stroke"
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 700,
+              fontSize: `clamp(10px, ${cellSize * 0.42}px, 22px)`,
+              fontVariantNumeric: 'tabular-nums',
+              fill: 'var(--color-text)',
+              pointerEvents: 'none',
+              userSelect: 'none',
+            }}
+          >
+            {clue.value}
+          </text>
+        );
+      })}
 
       {/* Layer 7: Start cell highlight (tap mode) */}
       {startCell && (
