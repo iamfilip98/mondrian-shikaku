@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router';
+import { useCallback } from 'react';
+import { useNavigate, useLoaderData } from 'react-router';
 import { getDailyPuzzle, getTimeUntilMidnightUTC } from '~/lib/puzzle/scheduled';
 import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
@@ -17,34 +17,17 @@ export function meta() {
   ];
 }
 
+export function loader() {
+  const today = new Date();
+  const dateStr = today.toISOString().slice(0, 10);
+  return { puzzle: getDailyPuzzle(today), dateStr };
+}
+
 export default function Daily() {
   const navigate = useNavigate();
-  const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
-  const [dateStr, setDateStr] = useState('');
-
-  useEffect(() => {
-    const today = new Date();
-    setDateStr(today.toISOString().slice(0, 10));
-    setPuzzle(getDailyPuzzle(today));
-  }, []);
+  const { puzzle, dateStr } = useLoaderData<typeof loader>();
 
   const handleNextPuzzle = useCallback(() => navigate('/play'), [navigate]);
-
-  if (!puzzle) {
-    return (
-      <div className="flex items-center justify-center" style={{ height: '60vh' }}>
-        <span
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 'var(--text-lg)',
-            color: 'var(--color-text-muted)',
-          }}
-        >
-          Generating puzzle...
-        </span>
-      </div>
-    );
-  }
 
   return (
     <div>

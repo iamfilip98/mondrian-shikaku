@@ -136,6 +136,7 @@ export default function GamePage({
       const token = await getToken();
       if (!token) {
         addToast('Could not save your solve. Please sign in again.', 'error');
+        solveSubmittedRef.current = false;
         return;
       }
 
@@ -177,6 +178,7 @@ export default function GamePage({
         }
       }
       addToast('Could not save your solve. Please try again later.', 'error');
+      solveSubmittedRef.current = false;
     })();
   }, [gameState.isComplete, user, puzzleSeed, puzzleType, difficulty, puzzle.width, puzzle.height, gameState.elapsedSeconds, gameState.hintsUsed, blindMode, refreshProfile, getToken, addToast]);
 
