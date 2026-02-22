@@ -8,8 +8,10 @@ import {
 } from 'react-router';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useLocation } from 'react-router';
+import { ClerkProvider } from '@clerk/clerk-react';
 import type { Route } from './+types/root';
 import { ThemeContext, useThemeProvider } from '~/lib/hooks/useTheme';
+import { useSettingsSync } from '~/lib/hooks/useSettingsSync';
 import Nav from '~/components/ui/Nav';
 import './app.css';
 
@@ -20,6 +22,8 @@ const initThemeScript = `(function(){try{
 }catch(e){
   document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 }})();`;
+
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -53,12 +57,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
-  const themeValue = useThemeProvider();
+function AppContent() {
   const location = useLocation();
+  useSettingsSync();
 
   return (
-    <ThemeContext.Provider value={themeValue}>
+    <>
       <Nav />
       <AnimatePresence mode="wait">
         <motion.main
@@ -71,7 +75,24 @@ export default function App() {
           <Outlet />
         </motion.main>
       </AnimatePresence>
-    </ThemeContext.Provider>
+    </>
+  );
+}
+
+export default function App() {
+  const themeValue = useThemeProvider();
+
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      signInUrl="/login"
+      signUpUrl="/signup"
+      afterSignOutUrl="/"
+    >
+      <ThemeContext.Provider value={themeValue}>
+        <AppContent />
+      </ThemeContext.Provider>
+    </ClerkProvider>
   );
 }
 

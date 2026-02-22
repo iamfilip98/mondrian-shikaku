@@ -1,7 +1,4 @@
-import { useState } from 'react';
-import { Link } from 'react-router';
-import Button from '~/components/ui/Button';
-import Input from '~/components/ui/Input';
+import { SignUp } from '@clerk/clerk-react';
 
 export function meta() {
   return [
@@ -11,25 +8,6 @@ export function meta() {
 }
 
 export default function Signup() {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (username.length < 3) {
-      setError('Username must be at least 3 characters.');
-      return;
-    }
-    setLoading(true);
-    // TODO: Supabase auth integration
-    setLoading(false);
-    setError('Authentication not yet configured. Set up Supabase credentials to enable sign-up.');
-  };
-
   return (
     <div className="flex min-h-[calc(100vh-56px)]">
       {/* Left panel */}
@@ -62,71 +40,13 @@ export default function Signup() {
         </div>
       </div>
 
-      {/* Form */}
+      {/* Sign-up form */}
       <div className="flex-1 flex items-center justify-center px-6 py-12 md:py-0">
-        <form onSubmit={handleSubmit} className="w-full max-w-[360px]">
-          <h1
-            className="mb-8"
-            style={{
-              fontFamily: 'var(--font-display)',
-              fontSize: 'var(--text-3xl)',
-              color: 'var(--color-text)',
-            }}
-          >
-            Create Account
-          </h1>
-
-          <div className="flex flex-col gap-4 mb-6">
-            <Input
-              label="Username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <Input
-              label="Password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={8}
-            />
-          </div>
-
-          {error && (
-            <p
-              className="mb-4"
-              style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: 'var(--text-sm)',
-                color: 'var(--color-red)',
-              }}
-            >
-              {error}
-            </p>
-          )}
-
-          <Button variant="primary" size="lg" fullWidth disabled={loading}>
-            {loading ? 'Creating...' : 'Create Account'}
-          </Button>
-
-          <div className="mt-6 text-center">
-            <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)' }}>
-              Already have an account?{' '}
-              <Link to="/login" style={{ color: 'var(--color-blue)', fontWeight: 500 }}>
-                Sign in
-              </Link>
-            </span>
-          </div>
-        </form>
+        <SignUp
+          routing="hash"
+          signInUrl="/login"
+          forceRedirectUrl="/"
+        />
       </div>
     </div>
   );

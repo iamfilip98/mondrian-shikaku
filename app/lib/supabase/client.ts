@@ -1,11 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = typeof process !== 'undefined'
-  ? process.env.SUPABASE_URL || ''
-  : '';
-const supabaseAnonKey = typeof process !== 'undefined'
-  ? process.env.SUPABASE_ANON_KEY || ''
-  : '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export const supabase = supabaseUrl && supabaseAnonKey
   ? createClient(supabaseUrl, supabaseAnonKey)
@@ -13,7 +9,7 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 export function getSupabaseClient() {
   if (!supabase) {
-    console.warn('Supabase not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY environment variables.');
+    console.warn('Supabase not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
   }
   return supabase;
 }

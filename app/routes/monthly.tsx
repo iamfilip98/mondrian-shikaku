@@ -25,9 +25,11 @@ export default function Monthly() {
   const navigate = useNavigate();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [monthStr, setMonthStr] = useState('');
+  const [seedStr, setSeedStr] = useState('');
 
   useEffect(() => {
     const now = new Date();
+    setSeedStr(`monthly-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`);
     setMonthStr(
       now.toLocaleDateString('en-US', {
         month: 'long',
@@ -101,6 +103,7 @@ export default function Monthly() {
         puzzle={puzzle}
         difficulty="nightmare"
         puzzleType="Monthly"
+        puzzleSeed={seedStr}
         onNextPuzzle={handleNextPuzzle}
       />
     </div>

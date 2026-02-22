@@ -4,6 +4,9 @@ import type { Puzzle, Difficulty } from '~/lib/puzzle/types';
 import type { GridRect } from '~/lib/puzzle/types';
 import { useGameState } from '~/lib/hooks/useGameState';
 import { useSound } from '~/lib/hooks/useSound';
+import { useAuth } from '~/lib/hooks/useAuth';
+import { saveSolve } from '~/lib/supabase/queries';
+import { updateDailyStreak, incrementPuzzlesCompleted } from '~/lib/supabase/queries';
 import GameBoard from './GameBoard';
 import GameControls from './GameControls';
 import SettingsDrawer from './SettingsDrawer';
@@ -15,6 +18,7 @@ interface GamePageProps {
   puzzle: Puzzle;
   difficulty: Difficulty;
   puzzleType: string;
+  puzzleSeed?: string;
   onNextPuzzle?: () => void;
 }
 
@@ -22,6 +26,7 @@ export default function GamePage({
   puzzle,
   difficulty,
   puzzleType,
+  puzzleSeed,
   onNextPuzzle,
 }: GamePageProps) {
   const [blindMode, setBlindMode] = useState(() => {
@@ -35,6 +40,7 @@ export default function GamePage({
 
   const gameState = useGameState(puzzle, blindMode);
   const sound = useSound();
+  const { user, profile, refreshProfile } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [introComplete, setIntroComplete] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -58,6 +64,12 @@ export default function GamePage({
   const isPinchingRef = useRef(false);
   const pinchCooldownRef = useRef(false);
   const pendingRemovalRef = useRef<{ index: number; x: number; y: number } | null>(null);
+
+  // Solve submission guard
+  const solveSubmittedRef = useRef(false);
+
+  // Streak state for WinModal
+  const [winStreak, setWinStreak] = useState<number | null>(null);
 
   // Calculate cell size
   const cellSize = useMemo(() => {
@@ -87,6 +99,40 @@ export default function GamePage({
       sound.playWinChord();
     }, 800);
   }
+
+  // Submit solve when game completes
+  useEffect(() => {
+    if (!gameState.isComplete || solveSubmittedRef.current || !user || !puzzleSeed) return;
+    solveSubmittedRef.current = true;
+
+    const puzzleTypeKey = puzzleType === 'Daily' ? 'daily'
+      : puzzleType === 'Weekly' ? 'weekly'
+      : puzzleType === 'Monthly' ? 'monthly'
+      : 'free';
+
+    saveSolve({
+      userId: user.id,
+      puzzleType: puzzleTypeKey,
+      puzzleSeed,
+      difficulty,
+      gridWidth: puzzle.width,
+      gridHeight: puzzle.height,
+      solveTimeSeconds: gameState.elapsedSeconds,
+      hintsUsed: gameState.hintsUsed,
+      blindModeOn: blindMode,
+    }).then(async () => {
+      if (puzzleTypeKey === 'daily') {
+        await updateDailyStreak(user.id);
+        await refreshProfile();
+        const { getProfile } = await import('~/lib/supabase/queries');
+        const updatedProfile = await getProfile(user.id);
+        if (updatedProfile) setWinStreak(updatedProfile.daily_streak);
+      } else {
+        await incrementPuzzlesCompleted(user.id);
+        await refreshProfile();
+      }
+    });
+  }, [gameState.isComplete, user, puzzleSeed, puzzleType, difficulty, puzzle.width, puzzle.height, gameState.elapsedSeconds, gameState.hintsUsed, blindMode, refreshProfile]);
 
   // Cancel any in-progress game interaction
   const cancelInteraction = useCallback(() => {
@@ -419,6 +465,8 @@ export default function GamePage({
         hintsUsed={gameState.hintsUsed}
         blindMode={blindMode}
         puzzleType={puzzleType}
+        isLoggedIn={!!user}
+        streak={puzzleType === 'Daily' ? winStreak : undefined}
         onNextPuzzle={onNextPuzzle || (() => window.location.reload())}
         onShare={handleShare}
         onClose={() => setShowWinModal(false)}

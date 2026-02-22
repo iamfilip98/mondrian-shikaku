@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '~/lib/hooks/useAuth';
 
 const navLinks = [
   { href: '/play', label: 'Play' },
@@ -14,6 +15,7 @@ const navLinks = [
 export default function Nav() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { user, profile, loading, signOut } = useAuth();
 
   return (
     <nav
@@ -100,19 +102,60 @@ export default function Nav() {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Auth link (desktop) */}
-        <Link
-          to="/login"
-          className="hidden md:flex items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] shrink-0"
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontWeight: 500,
-            fontSize: 'var(--text-sm)',
-            color: 'var(--color-text)',
-          }}
-        >
-          Sign In
-        </Link>
+        {/* Auth area (desktop) */}
+        {!loading && (
+          user ? (
+            <div className="hidden md:flex items-center h-full border-l-[3px] border-[var(--color-border)]">
+              <div className="flex items-center gap-2 px-4">
+                <div
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    backgroundColor: profile?.avatar_color || 'var(--color-red)',
+                  }}
+                />
+                <span
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 500,
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--color-text)',
+                  }}
+                >
+                  {profile?.username || 'Player'}
+                </span>
+              </div>
+              <button
+                onClick={() => signOut()}
+                className="flex items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] cursor-pointer"
+                style={{
+                  fontFamily: 'var(--font-body)',
+                  fontWeight: 400,
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-text-muted)',
+                  background: 'none',
+                  border: 'none',
+                  borderLeft: '3px solid var(--color-border)',
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden md:flex items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] shrink-0"
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontWeight: 500,
+                fontSize: 'var(--text-sm)',
+                color: 'var(--color-text)',
+              }}
+            >
+              Sign In
+            </Link>
+          )
+        )}
 
         {/* Mobile hamburger */}
         <button
@@ -168,20 +211,61 @@ export default function Nav() {
                 </Link>
               );
             })}
-            <Link
-              to="/login"
-              className="flex items-center px-6"
-              style={{
-                height: '48px',
-                fontFamily: 'var(--font-body)',
-                fontWeight: 500,
-                fontSize: 'var(--text-sm)',
-                color: 'var(--color-text)',
-              }}
-              onClick={() => setMenuOpen(false)}
-            >
-              Sign In
-            </Link>
+            {!loading && (
+              user ? (
+                <>
+                  <div
+                    className="flex items-center gap-2 px-6 border-b-2 border-[var(--color-border)]"
+                    style={{
+                      height: '48px',
+                      fontFamily: 'var(--font-body)',
+                      fontWeight: 500,
+                      fontSize: 'var(--text-sm)',
+                      color: 'var(--color-text)',
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: '10px',
+                        height: '10px',
+                        backgroundColor: profile?.avatar_color || 'var(--color-red)',
+                      }}
+                    />
+                    {profile?.username || 'Player'}
+                  </div>
+                  <button
+                    className="flex items-center px-6 w-full cursor-pointer"
+                    style={{
+                      height: '48px',
+                      fontFamily: 'var(--font-body)',
+                      fontWeight: 400,
+                      fontSize: 'var(--text-sm)',
+                      color: 'var(--color-text-muted)',
+                      background: 'none',
+                      border: 'none',
+                    }}
+                    onClick={() => { signOut(); setMenuOpen(false); }}
+                  >
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link
+                  to="/login"
+                  className="flex items-center px-6"
+                  style={{
+                    height: '48px',
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 500,
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--color-text)',
+                  }}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Sign In
+                </Link>
+              )
+            )}
           </motion.div>
         )}
       </AnimatePresence>

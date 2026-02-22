@@ -96,6 +96,7 @@ export default function Weekly() {
         puzzle={puzzle}
         difficulty="expert"
         puzzleType="Weekly"
+        puzzleSeed={`weekly-${year}-W${String(week).padStart(2, '0')}`}
         onNextPuzzle={handleNextPuzzle}
       />
     </div>

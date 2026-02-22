@@ -93,6 +93,7 @@ export default function Daily() {
         puzzle={puzzle}
         difficulty="medium"
         puzzleType="Daily"
+        puzzleSeed={`daily-${dateStr}`}
         onNextPuzzle={handleNextPuzzle}
       />
     </div>

@@ -26,7 +26,11 @@ export async function saveSolve(solve: {
     blind_mode_on: solve.blindModeOn,
   });
 
-  if (error) console.error('Error saving solve:', error);
+  if (error) {
+    // Silently ignore duplicate scheduled puzzle solves (unique constraint violation)
+    if (error.code === '23505') return null;
+    console.error('Error saving solve:', error);
+  }
   return data;
 }
 
@@ -116,4 +120,55 @@ export async function getProfile(userId: string) {
     .single();
 
   return data;
+}
+
+export async function updateDailyStreak(userId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  const profile = await getProfile(userId);
+  if (!profile) return;
+
+  const today = new Date().toISOString().slice(0, 10);
+  const lastDate = profile.last_daily_date;
+
+  let newStreak: number;
+  if (lastDate === today) {
+    // Already counted today
+    return;
+  } else if (lastDate) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    newStreak = lastDate === yesterdayStr ? profile.daily_streak + 1 : 1;
+  } else {
+    newStreak = 1;
+  }
+
+  const longestStreak = Math.max(profile.longest_streak || 0, newStreak);
+
+  await supabase
+    .from('profiles')
+    .update({
+      daily_streak: newStreak,
+      longest_streak: longestStreak,
+      last_daily_date: today,
+      puzzles_completed: (profile.puzzles_completed || 0) + 1,
+    })
+    .eq('id', userId);
+}
+
+export async function incrementPuzzlesCompleted(userId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) return;
+
+  const profile = await getProfile(userId);
+  if (!profile) return;
+
+  await supabase
+    .from('profiles')
+    .update({
+      puzzles_completed: (profile.puzzles_completed || 0) + 1,
+    })
+    .eq('id', userId);
 }

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
 import type { Difficulty } from '~/lib/puzzle/types';
@@ -10,6 +11,8 @@ interface WinModalProps {
   hintsUsed: number;
   blindMode: boolean;
   puzzleType: string;
+  isLoggedIn?: boolean;
+  streak?: number | null;
   onNextPuzzle: () => void;
   onShare: () => void;
   onClose: () => void;
@@ -28,6 +31,8 @@ export default function WinModal({
   hintsUsed,
   blindMode,
   puzzleType,
+  isLoggedIn,
+  streak,
   onNextPuzzle,
   onShare,
   onClose,
@@ -96,7 +101,7 @@ export default function WinModal({
               </div>
 
               {/* Badges row */}
-              <div className="flex items-center justify-center gap-2 mb-6">
+              <div className="flex items-center justify-center gap-2 mb-6 flex-wrap">
                 <Badge difficulty={difficulty} />
                 {hintsUsed > 0 && (
                   <span
@@ -123,6 +128,20 @@ export default function WinModal({
                     Blind Mode
                   </span>
                 )}
+                {streak != null && streak > 0 && (
+                  <span
+                    className="inline-flex items-center px-3 py-1 border-2 border-[var(--color-border)]"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'var(--text-xs)',
+                      backgroundColor: 'var(--color-yellow)',
+                      color: 'var(--color-black)',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {streak} day streak
+                  </span>
+                )}
               </div>
 
               {/* Actions */}
@@ -134,6 +153,22 @@ export default function WinModal({
                   Next Puzzle
                 </Button>
               </div>
+
+              {/* Sign in prompt */}
+              {isLoggedIn === false && (
+                <div className="mt-4 text-center">
+                  <Link
+                    to="/login"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--color-text-muted)',
+                    }}
+                  >
+                    Sign in to save your solve and appear on leaderboards
+                  </Link>
+                </div>
+              )}
             </div>
           </motion.div>
         </>

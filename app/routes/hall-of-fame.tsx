@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react';
+import { getHallOfFame } from '~/lib/supabase/queries';
+
 export function meta() {
   return [
     { title: 'Hall of Fame — Mondrian Shikaku' },
@@ -9,8 +12,7 @@ export function meta() {
   ];
 }
 
-// Placeholder — will be populated from Supabase
-const hallOfFameEntries: {
+interface HofMonth {
   monthYear: string;
   entries: {
     rank: number;
@@ -18,11 +20,40 @@ const hallOfFameEntries: {
     avatarColor: string;
     solveTime: number;
   }[];
-}[] = [];
+}
 
 const rankColors = ['var(--color-yellow)', 'var(--color-surface-2)', 'var(--color-red)'];
 
 export default function HallOfFame() {
+  const [hallOfFameEntries, setHallOfFameEntries] = useState<HofMonth[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getHallOfFame().then((data) => {
+      // Group by month_year
+      const grouped = new Map<string, HofMonth>();
+      for (const row of data) {
+        const key = row.month_year;
+        if (!grouped.has(key)) {
+          grouped.set(key, { monthYear: key, entries: [] });
+        }
+        const profileData = row.profiles as any;
+        grouped.get(key)!.entries.push({
+          rank: row.rank,
+          username: profileData?.username ?? 'Unknown',
+          avatarColor: profileData?.avatar_color ?? '#D40920',
+          solveTime: row.solve_time_secs,
+        });
+      }
+      // Sort entries within each month by rank
+      for (const month of grouped.values()) {
+        month.entries.sort((a, b) => a.rank - b.rank);
+      }
+      setHallOfFameEntries(Array.from(grouped.values()));
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <div className="max-w-[800px] mx-auto px-6 py-12">
       <h1
@@ -46,7 +77,18 @@ export default function HallOfFame() {
         Monthly Nightmare puzzle — top 3 finishers, archived forever.
       </p>
 
-      {hallOfFameEntries.length === 0 ? (
+      {loading ? (
+        <div
+          className="flex items-center justify-center py-12"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          Loading...
+        </div>
+      ) : hallOfFameEntries.length === 0 ? (
         <div
           className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-12 text-center"
           style={{ borderLeftWidth: '6px', borderLeftColor: 'var(--color-yellow)' }}

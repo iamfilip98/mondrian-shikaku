@@ -106,6 +106,7 @@ export default function Play() {
           puzzle={puzzle}
           difficulty={selected}
           puzzleType="Free Play"
+          puzzleSeed={puzzleSeed}
           onNextPuzzle={handleNextPuzzle}
         />
       </div>

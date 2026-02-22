@@ -1,6 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import LeaderboardTable from '~/components/ui/LeaderboardTable';
+import { useAuth } from '~/lib/hooks/useAuth';
+import {
+  getDailyLeaderboard,
+  getWeeklyLeaderboard,
+  getMonthlyLeaderboard,
+  getAllTimeLeaderboard,
+} from '~/lib/supabase/queries';
 
 export function meta() {
   return [
@@ -16,15 +23,61 @@ export function meta() {
 const tabs = ['Daily', 'Weekly', 'Monthly', 'All-Time'] as const;
 type Tab = (typeof tabs)[number];
 
-// Placeholder data — will be replaced with Supabase queries
-const mockEntries = [
-  { rank: 1, username: 'mondrian_fan', avatarColor: '#D40920', solveTime: 142, hintsUsed: 0, completedAt: '2026-02-21' },
-  { rank: 2, username: 'grid_master', avatarColor: '#1356A2', solveTime: 187, hintsUsed: 0, completedAt: '2026-02-21' },
-  { rank: 3, username: 'puzzle_lover', avatarColor: '#F9C30F', solveTime: 215, hintsUsed: 1, completedAt: '2026-02-21' },
-];
+interface LeaderboardEntry {
+  rank: number;
+  username: string;
+  avatarColor: string;
+  solveTime: number;
+  hintsUsed: number;
+  completedAt: string;
+}
+
+function mapEntries(data: any[]): LeaderboardEntry[] {
+  return data.map((row, i) => ({
+    rank: i + 1,
+    username: row.username,
+    avatarColor: row.avatar_color || '#D40920',
+    solveTime: row.solve_time_seconds ?? row.best_time ?? row.avg_time ?? 0,
+    hintsUsed: row.hints_used ?? 0,
+    completedAt: row.completed_at ?? '',
+  }));
+}
 
 export default function Leaderboard() {
   const [activeTab, setActiveTab] = useState<Tab>('Daily');
+  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { profile } = useAuth();
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+
+    const fetch = async () => {
+      let data: any[] = [];
+      switch (activeTab) {
+        case 'Daily':
+          data = await getDailyLeaderboard();
+          break;
+        case 'Weekly':
+          data = await getWeeklyLeaderboard();
+          break;
+        case 'Monthly':
+          data = await getMonthlyLeaderboard();
+          break;
+        case 'All-Time':
+          data = await getAllTimeLeaderboard();
+          break;
+      }
+      if (!cancelled) {
+        setEntries(mapEntries(data));
+        setLoading(false);
+      }
+    };
+
+    fetch();
+    return () => { cancelled = true; };
+  }, [activeTab]);
 
   return (
     <div className="max-w-[800px] mx-auto px-6 py-12">
@@ -73,7 +126,20 @@ export default function Leaderboard() {
         ))}
       </div>
 
-      <LeaderboardTable entries={mockEntries} />
+      {loading ? (
+        <div
+          className="flex items-center justify-center py-12"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          Loading...
+        </div>
+      ) : (
+        <LeaderboardTable entries={entries} currentUser={profile?.username} />
+      )}
     </div>
   );
 }

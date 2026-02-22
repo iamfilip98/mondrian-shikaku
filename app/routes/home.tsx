@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { motion } from 'framer-motion';
 import Button from '~/components/ui/Button';
 import Countdown from '~/components/ui/Countdown';
+import { useAuth } from '~/lib/hooks/useAuth';
 import {
   getTimeUntilMidnightUTC,
   getTimeUntilMondayUTC,
@@ -47,8 +48,42 @@ const demoRects = [
 ];
 
 export default function Home() {
+  const { profile } = useAuth();
+
   return (
     <div>
+      {/* Streak banner */}
+      {profile && profile.daily_streak > 0 && (
+        <div
+          className="w-full flex items-center justify-center gap-3 py-3"
+          style={{
+            backgroundColor: 'var(--color-yellow)',
+            borderBottom: '3px solid var(--color-border)',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontWeight: 700,
+              fontSize: 'var(--text-sm)',
+              color: 'var(--color-black)',
+            }}
+          >
+            {profile.daily_streak} day streak
+          </span>
+          <span
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-xs)',
+              color: 'var(--color-black)',
+              opacity: 0.7,
+            }}
+          >
+            Keep it going — play today's puzzle!
+          </span>
+        </div>
+      )}
+
       {/* Hero */}
       <section
         className="relative w-full overflow-hidden"

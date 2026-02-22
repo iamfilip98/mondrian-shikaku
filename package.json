@@ -9,9 +9,9 @@
     "typecheck": "react-router typegen && tsc"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.1",
     "@react-router/node": "7.12.0",
     "@react-router/serve": "7.12.0",
-    "@supabase/auth-helpers-remix": "^0.15.0",
     "@supabase/supabase-js": "^2.97.0",
     "@vercel/react-router": "^1.2.5",
     "date-fns": "^4.1.0",
