@@ -25,7 +25,7 @@ export function meta() {
 const tabs = ['Daily', 'Weekly', 'Monthly', 'All-Time'] as const;
 type Tab = (typeof tabs)[number];
 
-const difficulties = ['primer', 'easy', 'medium', 'hard', 'expert', 'nightmare'] as const;
+const difficulties = ['easy', 'medium', 'hard', 'expert', 'nightmare'] as const;
 
 // Module-level cache with 60s TTL
 const leaderboardCache = new Map<string, { entries: LeaderboardEntry[]; fetchedAt: number }>();

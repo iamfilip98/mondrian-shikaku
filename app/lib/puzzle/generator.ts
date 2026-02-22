@@ -209,16 +209,16 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
     config.height || seededRandInt(diffConfig.minGrid, diffConfig.maxGrid, rng);
 
   const totalCells = width * height;
-  const isLargeGrid = totalCells > 300;
+  const isLargeGrid = totalCells > 500; // Only nightmare (25×25+) skips solver
 
   let bestPuzzle: Puzzle | null = null;
   let attempts = 0;
-  const maxAttempts = isLargeGrid ? 4 : 8;
+  const maxAttempts = isLargeGrid ? 4 : totalCells > 300 ? 6 : 8;
   let relaxFactor = isLargeGrid ? 1.5 : 1.0;
 
-  // For large grids, skip uniqueness check (too expensive) and use lower node cap
-  const checkUniqueness = !isLargeGrid;
-  const solverNodeCap = isLargeGrid ? 10000 : 50000;
+  // Tiered solver settings based on grid size
+  const checkUniqueness = totalCells <= 300; // Uniqueness for primer through medium-sized grids
+  const solverNodeCap = isLargeGrid ? 10000 : totalCells > 300 ? 10000 : 50000;
 
   while (attempts < maxAttempts) {
     const seedSuffix = attempts > 0 ? `+${attempts}` : '';
@@ -259,6 +259,11 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
     const result = solve(puzzle, checkUniqueness, solverNodeCap);
 
     if (!result.solution) {
+      // Solver couldn't find solution within budget — for hard+ difficulties
+      // the partition guarantees a valid solution, so the puzzle is genuinely hard
+      if (diffConfig.backtrackMin >= 10) {
+        return puzzle;
+      }
       attempts++;
       continue;
     }
@@ -268,18 +273,19 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
     const targetMax = diffConfig.backtrackMax * relaxFactor;
 
     if (result.backtracks >= targetMin && result.backtracks <= targetMax) {
-      if (result.isUnique) {
+      if (checkUniqueness ? result.isUnique : true) {
         return puzzle;
       }
     }
 
-    // Store as fallback
-    if (result.isUnique && (!bestPuzzle || Math.abs(result.backtracks - targetMin) < 30)) {
+    // Store as fallback — prefer unique for smaller grids, accept any for larger
+    const isAcceptable = checkUniqueness ? result.isUnique : true;
+    if (isAcceptable && (!bestPuzzle || Math.abs(result.backtracks - targetMin) < 30)) {
       bestPuzzle = puzzle;
     }
 
     attempts++;
-    if (attempts >= 3) relaxFactor = 1.5;
+    if (attempts >= 3) relaxFactor = 2.0;
   }
 
   // Return best attempt or generate a simple fallback

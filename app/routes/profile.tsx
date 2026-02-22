@@ -23,7 +23,7 @@ const MONDRIAN_COLORS = [
   { value: '#F5F5F0', label: 'White' },
 ];
 
-const DIFFICULTY_ORDER = ['primer', 'easy', 'medium', 'hard', 'expert', 'nightmare'] as const;
+const DIFFICULTY_ORDER = ['easy', 'medium', 'hard', 'expert', 'nightmare'] as const;
 
 interface DifficultyStats {
   difficulty: string;
