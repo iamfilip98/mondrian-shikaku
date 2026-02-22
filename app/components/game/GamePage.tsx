@@ -26,19 +26,20 @@ export default function GamePage({
 }: GamePageProps) {
   const [blindMode, setBlindMode] = useState(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('blindMode') === 'true';
+    try { return localStorage.getItem('blindMode') === 'true'; } catch { return false; }
   });
   const [showDragCounter, setShowDragCounter] = useState(() => {
     if (typeof window === 'undefined') return true;
-    return localStorage.getItem('showDragCounter') !== 'false';
+    try { return localStorage.getItem('showDragCounter') !== 'false'; } catch { return true; }
   });
 
   const gameState = useGameState(puzzle, blindMode);
   const sound = useSound();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [introComplete, setIntroComplete] = useState(
-    typeof window !== 'undefined' && sessionStorage.getItem('introPlayed') === '1'
-  );
+  const [introComplete, setIntroComplete] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try { return sessionStorage.getItem('introPlayed') === '1'; } catch { return false; }
+  });
   const handleIntroComplete = useCallback(() => setIntroComplete(true), []);
   const [showWinModal, setShowWinModal] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -397,7 +398,7 @@ export default function GamePage({
         blindMode={blindMode}
         onBlindModeChange={(v) => {
           setBlindMode(v);
-          localStorage.setItem('blindMode', String(v));
+          try { localStorage.setItem('blindMode', String(v)); } catch {}
         }}
         soundEnabled={sound.enabled}
         onSoundChange={sound.toggleSound}
@@ -406,7 +407,7 @@ export default function GamePage({
         showDragCounter={showDragCounter}
         onShowDragCounterChange={(v) => {
           setShowDragCounter(v);
-          localStorage.setItem('showDragCounter', String(v));
+          try { localStorage.setItem('showDragCounter', String(v)); } catch {}
         }}
       />
 

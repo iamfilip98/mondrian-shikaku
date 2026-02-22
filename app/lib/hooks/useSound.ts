@@ -2,9 +2,9 @@ import { useCallback, useRef, useEffect, useState } from 'react';
 
 let audioCtx: AudioContext | null = null;
 
-function getAudioContext(): AudioContext {
+function getAudioContext(): AudioContext | null {
   if (!audioCtx) {
-    audioCtx = new AudioContext();
+    try { audioCtx = new AudioContext(); } catch { return null; }
   }
   return audioCtx;
 }
@@ -13,19 +13,22 @@ export function useSound() {
   const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('sound');
-    if (stored !== null) setEnabled(stored === 'true');
+    try {
+      const stored = localStorage.getItem('sound');
+      if (stored !== null) setEnabled(stored === 'true');
+    } catch {}
   }, []);
 
   const toggleSound = useCallback((value: boolean) => {
     setEnabled(value);
-    localStorage.setItem('sound', String(value));
+    try { localStorage.setItem('sound', String(value)); } catch {}
   }, []);
 
   const playThunk = useCallback(() => {
     if (!enabled) return;
     try {
       const ctx = getAudioContext();
+      if (!ctx) return;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sine';
@@ -43,6 +46,7 @@ export function useSound() {
     if (!enabled) return;
     try {
       const ctx = getAudioContext();
+      if (!ctx) return;
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = 'sawtooth';
@@ -60,6 +64,7 @@ export function useSound() {
     if (!enabled) return;
     try {
       const ctx = getAudioContext();
+      if (!ctx) return;
       const notes = [261.63, 329.63, 392.0]; // C-E-G
       notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
@@ -81,6 +86,7 @@ export function useSound() {
     if (!enabled) return;
     try {
       const ctx = getAudioContext();
+      if (!ctx) return;
       const notes = [523.25, 659.25, 783.99, 1046.5]; // C5-E5-G5-C6
       notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();

@@ -10,32 +10,41 @@ const BLOCKS = [
   { x: '75%', y: '0%', w: '25%', h: '15%', color: 'var(--color-red)' },
 ];
 
+function prefersReducedMotion(): boolean {
+  try {
+    return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch { return false; }
+}
+
 export default function IntroAnimation({ onComplete }: { onComplete: () => void }) {
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useState(() => !prefersReducedMotion());
 
   useEffect(() => {
-    // Check if already played this session
-    if (typeof window !== 'undefined' && sessionStorage.getItem('introPlayed')) {
+    if (prefersReducedMotion()) {
       setShow(false);
       onComplete();
       return;
     }
 
+    // Check if already played this session
+    try {
+      if (sessionStorage.getItem('introPlayed')) {
+        setShow(false);
+        onComplete();
+        return;
+      }
+    } catch {}
+
     const timer = setTimeout(() => {
       setShow(false);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('introPlayed', '1');
-      }
+      try { sessionStorage.setItem('introPlayed', '1'); } catch {}
       onComplete();
     }, 1200);
 
     return () => clearTimeout(timer);
   }, [onComplete]);
 
-  // Respect reduced motion
-  if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    return null;
-  }
+  if (!show) return null;
 
   return (
     <AnimatePresence>

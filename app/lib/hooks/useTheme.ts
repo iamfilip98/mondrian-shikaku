@@ -23,8 +23,10 @@ export function useThemeProvider() {
   const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
-    const stored = localStorage.getItem('theme') as Theme | null;
-    if (stored) setThemeState(stored);
+    try {
+      const stored = localStorage.getItem('theme') as Theme | null;
+      if (stored) setThemeState(stored);
+    } catch {}
 
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     setSystemTheme(mq.matches ? 'dark' : 'light');
@@ -44,7 +46,7 @@ export function useThemeProvider() {
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
+    try { localStorage.setItem('theme', newTheme); } catch {}
     const resolved = newTheme === 'system'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : newTheme;

@@ -50,12 +50,16 @@ export default function Play() {
   const puzzle = useMemo(() => {
     if (!selected) return null;
     const config = DIFFICULTY_CONFIGS[selected];
-    return generatePuzzle({
-      width: config.maxGrid,
-      height: config.maxGrid,
-      difficulty: selected,
-      seed: puzzleSeed,
-    });
+    try {
+      return generatePuzzle({
+        width: config.maxGrid,
+        height: config.maxGrid,
+        difficulty: selected,
+        seed: puzzleSeed,
+      });
+    } catch {
+      return null;
+    }
   }, [selected, puzzleSeed]);
 
   const handleNextPuzzle = () => {

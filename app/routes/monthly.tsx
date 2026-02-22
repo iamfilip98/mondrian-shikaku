@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import { getMonthlyPuzzle, getTimeUntilFirstOfMonth } from '~/lib/puzzle/scheduled';
 import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
@@ -21,6 +22,7 @@ export function meta() {
 }
 
 export default function Monthly() {
+  const navigate = useNavigate();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [monthStr, setMonthStr] = useState('');
 
@@ -32,8 +34,14 @@ export default function Monthly() {
         year: 'numeric',
       })
     );
-    setPuzzle(getMonthlyPuzzle(now));
+    try {
+      setPuzzle(getMonthlyPuzzle(now));
+    } catch {
+      try { setPuzzle(getMonthlyPuzzle(now)); } catch {}
+    }
   }, []);
+
+  const handleNextPuzzle = useCallback(() => navigate('/play'), [navigate]);
 
   if (!puzzle) {
     return (
@@ -93,6 +101,7 @@ export default function Monthly() {
         puzzle={puzzle}
         difficulty="nightmare"
         puzzleType="Monthly"
+        onNextPuzzle={handleNextPuzzle}
       />
     </div>
   );

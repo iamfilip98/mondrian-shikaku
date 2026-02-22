@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import { getDailyPuzzle, getTimeUntilMidnightUTC } from '~/lib/puzzle/scheduled';
 import type { Puzzle } from '~/lib/puzzle/types';
 import Countdown from '~/components/ui/Countdown';
@@ -17,6 +18,7 @@ export function meta() {
 }
 
 export default function Daily() {
+  const navigate = useNavigate();
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
   const [dateStr, setDateStr] = useState('');
 
@@ -25,6 +27,8 @@ export default function Daily() {
     setDateStr(today.toISOString().slice(0, 10));
     setPuzzle(getDailyPuzzle(today));
   }, []);
+
+  const handleNextPuzzle = useCallback(() => navigate('/play'), [navigate]);
 
   if (!puzzle) {
     return (
@@ -89,6 +93,7 @@ export default function Daily() {
         puzzle={puzzle}
         difficulty="medium"
         puzzleType="Daily"
+        onNextPuzzle={handleNextPuzzle}
       />
     </div>
   );

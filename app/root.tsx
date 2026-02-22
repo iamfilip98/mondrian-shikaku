@@ -13,11 +13,13 @@ import { ThemeContext, useThemeProvider } from '~/lib/hooks/useTheme';
 import Nav from '~/components/ui/Nav';
 import './app.css';
 
-const initThemeScript = `(function(){
+const initThemeScript = `(function(){try{
   var s = localStorage.getItem('theme');
   var m = window.matchMedia('(prefers-color-scheme: dark)').matches;
   document.documentElement.setAttribute('data-theme', s === 'light' || s === 'dark' ? s : (m ? 'dark' : 'light'));
-})();`;
+}catch(e){
+  document.documentElement.setAttribute('data-theme', window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+}})();`;
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },

@@ -97,8 +97,9 @@ export default function GameBoard({
         fill="var(--color-grid-bg)"
       />
 
-      {/* Ambient breathing for unplaced cells */}
+      {/* Ambient breathing for unplaced cells — skip on large grids for performance */}
       {!isComplete &&
+        puzzle.width * puzzle.height <= 225 &&
         Array.from({ length: puzzle.height }, (_, r) =>
           Array.from({ length: puzzle.width }, (_, c) => {
             if (coverageMap.has(`${r}-${c}`)) return null;
@@ -122,9 +123,10 @@ export default function GameBoard({
         )}
 
       {/* Layer 2: Placed rectangles */}
-      <AnimatePresence>
-        {placed.map((rect, idx) => (
-          <motion.rect
+      {puzzle.width * puzzle.height > 225 ? (
+        // Skip Framer Motion on large grids for performance
+        placed.map((rect, idx) => (
+          <rect
             key={`placed-${idx}-${rect.row}-${rect.col}`}
             x={rect.col * cellSize + 1}
             y={rect.row * cellSize + 1}
@@ -133,18 +135,38 @@ export default function GameBoard({
             fill={rect.color}
             stroke="var(--color-border)"
             strokeWidth={3.5}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.1 }}
             style={{ cursor: 'pointer' }}
             onClick={(e) => {
               e.stopPropagation();
               onRectClick(idx);
             }}
           />
-        ))}
-      </AnimatePresence>
+        ))
+      ) : (
+        <AnimatePresence>
+          {placed.map((rect, idx) => (
+            <motion.rect
+              key={`placed-${idx}-${rect.row}-${rect.col}`}
+              x={rect.col * cellSize + 1}
+              y={rect.row * cellSize + 1}
+              width={rect.width * cellSize - 2}
+              height={rect.height * cellSize - 2}
+              fill={rect.color}
+              stroke="var(--color-border)"
+              strokeWidth={3.5}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
+              style={{ cursor: 'pointer' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onRectClick(idx);
+              }}
+            />
+          ))}
+        </AnimatePresence>
+      )}
 
       {/* Layer 3: Preview rectangle */}
       {previewRect && (

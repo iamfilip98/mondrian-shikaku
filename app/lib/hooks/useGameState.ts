@@ -97,9 +97,11 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
   useEffect(() => {
     if (isComplete) {
       if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
       return;
     }
 
+    if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setElapsedSeconds((s) => s + 1);
     }, 1000);
@@ -107,7 +109,9 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
     const handleVisibility = () => {
       if (document.hidden) {
         if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
       } else if (!isComplete) {
+        if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
           setElapsedSeconds((s) => s + 1);
         }, 1000);
@@ -118,6 +122,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = null;
       document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, [isComplete]);
