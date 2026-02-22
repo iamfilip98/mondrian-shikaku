@@ -228,7 +228,7 @@ export default memo(function GameBoard({
         </>
       )}
 
-      {/* Layer 5: Outer border */}
+      {/* Layer 5: Outer border — strokeWidth doubled since half is clipped by viewport */}
       <rect
         x={0}
         y={0}
@@ -236,7 +236,7 @@ export default memo(function GameBoard({
         height={svgHeight}
         fill="none"
         stroke="var(--color-grid-border)"
-        strokeWidth={6}
+        strokeWidth={10}
       />
 
       {/* Layer 6: Clue numbers */}
