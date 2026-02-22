@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { generatePuzzle } from '~/lib/puzzle/generator';
 import { DIFFICULTY_CONFIGS, type Difficulty } from '~/lib/puzzle/types';
+import { trackEvent } from '~/lib/analytics';
 import GamePage from '~/components/game/GamePage';
 
 export function meta() {
@@ -211,7 +212,13 @@ export default function Play() {
               }}
               whileHover={{ y: -3, boxShadow: '8px 8px 0px 0px var(--color-border)' }}
               whileTap={{ y: 1, boxShadow: '2px 2px 0px 0px var(--color-border)' }}
-              onClick={() => setSelected(diff)}
+              onClick={() => {
+                trackEvent('difficulty_selected', {
+                  difficulty: diff,
+                  grid_size: `${config.maxGrid}x${config.maxGrid}`,
+                });
+                setSelected(diff);
+              }}
             >
               <div>
                 <span

@@ -12,6 +12,13 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import type { Route } from './+types/root';
 import { ThemeContext, useThemeProvider } from '~/lib/hooks/useTheme';
 import { useSettingsSync } from '~/lib/hooks/useSettingsSync';
+import { useAuth } from '~/lib/hooks/useAuth';
+import {
+  PostHogProvider,
+  usePostHogInit,
+  usePageView,
+  useAnalyticsIdentify,
+} from '~/lib/hooks/useAnalytics';
 import { ToastProvider } from '~/lib/hooks/useToast';
 import Nav from '~/components/ui/Nav';
 import ToastContainer from '~/components/ui/ToastContainer';
@@ -62,6 +69,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
 function AppContent() {
   const location = useLocation();
   useSettingsSync();
+  usePageView();
+  const { user, profile } = useAuth();
+  useAnalyticsIdentify(user, profile);
 
   return (
     <>
@@ -83,6 +93,7 @@ function AppContent() {
 
 export default function App() {
   const themeValue = useThemeProvider();
+  const posthogClient = usePostHogInit();
 
   return (
     <ClerkProvider
@@ -91,12 +102,14 @@ export default function App() {
       signUpUrl="/signup"
       afterSignOutUrl="/"
     >
-      <ThemeContext.Provider value={themeValue}>
-        <ToastProvider>
-          <AppContent />
-          <ToastContainer />
-        </ToastProvider>
-      </ThemeContext.Provider>
+      <PostHogProvider client={posthogClient}>
+        <ThemeContext.Provider value={themeValue}>
+          <ToastProvider>
+            <AppContent />
+            <ToastContainer />
+          </ToastProvider>
+        </ThemeContext.Provider>
+      </PostHogProvider>
     </ClerkProvider>
   );
 }

@@ -6,6 +6,7 @@ import { useGameState } from '~/lib/hooks/useGameState';
 import { useSound } from '~/lib/hooks/useSound';
 import { useAuth } from '~/lib/hooks/useAuth';
 import { useToast } from '~/lib/hooks/useToast';
+import { trackEvent } from '~/lib/analytics';
 import GameBoard from './GameBoard';
 import GameControls from './GameControls';
 import SettingsDrawer from './SettingsDrawer';
@@ -68,6 +69,19 @@ export default function GamePage({
   // Solve submission guard
   const solveSubmittedRef = useRef(false);
 
+  // Track puzzle_started once per puzzle
+  const puzzleTrackedRef = useRef(false);
+  useEffect(() => {
+    if (puzzleTrackedRef.current) return;
+    puzzleTrackedRef.current = true;
+    trackEvent('puzzle_started', {
+      puzzle_type: puzzleType,
+      difficulty,
+      grid_size: `${puzzle.width}x${puzzle.height}`,
+      seed: puzzleSeed,
+    });
+  }, []);
+
   // Streak state for WinModal
   const [winStreak, setWinStreak] = useState<number | null>(null);
 
@@ -95,6 +109,13 @@ export default function GamePage({
   const prevCompleteRef = useRef(false);
   if (gameState.isComplete && !prevCompleteRef.current) {
     prevCompleteRef.current = true;
+    trackEvent('puzzle_completed', {
+      puzzle_type: puzzleType,
+      difficulty,
+      solve_time_seconds: gameState.elapsedSeconds,
+      hints_used: gameState.hintsUsed,
+      blind_mode: blindMode,
+    });
     // Schedule win sequence
     setTimeout(() => setShowConfetti(true), 500);
     setTimeout(() => {
@@ -370,16 +391,25 @@ export default function GamePage({
 
   const handleHint = useCallback(() => {
     const hinted = gameState.hint();
-    if (hinted) sound.playThunk();
-  }, [gameState, sound]);
+    if (hinted) {
+      sound.playThunk();
+      trackEvent('hint_used', {
+        hints_remaining: gameState.hintsRemaining - 1,
+        elapsed_time: gameState.elapsedSeconds,
+        difficulty,
+      });
+    }
+  }, [gameState, sound, difficulty]);
 
   const handleShare = useCallback(async () => {
     const text = `MONDRIAN SHIKAKU · ${puzzleType} · ${difficulty} · ${Math.floor(gameState.elapsedSeconds / 60)}:${String(gameState.elapsedSeconds % 60).padStart(2, '0')}`;
     try {
       if (navigator.share) {
         await navigator.share({ text });
+        trackEvent('share_result', { method: 'native_share' });
       } else {
         await navigator.clipboard.writeText(text);
+        trackEvent('share_result', { method: 'clipboard' });
       }
     } catch {}
   }, [puzzleType, difficulty, gameState.elapsedSeconds]);
