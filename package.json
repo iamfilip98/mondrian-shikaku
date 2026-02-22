@@ -6,9 +6,11 @@
     "build": "react-router build",
     "dev": "react-router dev",
     "start": "react-router-serve ./build/server/index.js",
-    "typecheck": "react-router typegen && tsc"
+    "typecheck": "react-router typegen && tsc",
+    "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/backend": "^2.32.0",
     "@clerk/clerk-react": "^5.61.1",
     "@react-router/node": "7.12.0",
     "@react-router/serve": "7.12.0",
@@ -31,6 +33,7 @@
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2",
     "vite": "^7.1.7",
-    "vite-tsconfig-paths": "^5.1.4"
+    "vite-tsconfig-paths": "^5.1.4",
+    "vitest": "^4.0.18"
   }
 }

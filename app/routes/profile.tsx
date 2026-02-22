@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '~/lib/hooks/useAuth';
-import { getUserStats, updateProfile } from '~/lib/supabase/queries';
+import { getUserStats } from '~/lib/supabase/queries';
 
 export function meta() {
   return [
@@ -45,7 +45,7 @@ function formatDate(iso: string): string {
 }
 
 export default function Profile() {
-  const { user, profile, loading, refreshProfile } = useAuth();
+  const { user, profile, loading, refreshProfile, getToken } = useAuth();
   const [stats, setStats] = useState<DifficultyStats[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [savingColor, setSavingColor] = useState(false);
@@ -72,9 +72,22 @@ export default function Profile() {
   const handleColorChange = async (color: string) => {
     if (!user || savingColor) return;
     setSavingColor(true);
-    await updateProfile(user.id, { avatar_color: color });
-    await refreshProfile();
-    setSavingColor(false);
+    try {
+      const token = await getToken();
+      if (token) {
+        await fetch('/api/profile/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ avatar_color: color }),
+        });
+        await refreshProfile();
+      }
+    } finally {
+      setSavingColor(false);
+    }
   };
 
   // Auth gate

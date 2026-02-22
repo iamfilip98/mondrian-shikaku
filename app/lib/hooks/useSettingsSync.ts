@@ -1,15 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useAuth, type Profile } from './useAuth';
 import { useTheme } from './useTheme';
-import { updateProfile } from '~/lib/supabase/queries';
 
 /**
  * Syncs settings between localStorage and Supabase profile.
  * - On login: loads profile settings → localStorage
- * - On change: debounced push localStorage → Supabase
+ * - On change: debounced push localStorage → Supabase via server API
  */
 export function useSettingsSync() {
-  const { user, profile } = useAuth();
+  const { user, profile, getToken } = useAuth();
   const { setTheme } = useTheme();
   const lastSyncedRef = useRef<string | null>(null);
 
@@ -50,13 +49,23 @@ export function useSettingsSync() {
 
     const doSync = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => {
+      timer = setTimeout(async () => {
         try {
-          updateProfile(user.id, {
-            theme: localStorage.getItem('theme') || 'system',
-            blind_mode: localStorage.getItem('blindMode') === 'true',
-            sound_enabled: localStorage.getItem('soundEnabled') !== 'false',
-            show_timer: localStorage.getItem('showTimer') !== 'false',
+          const token = await getToken();
+          if (!token) return;
+
+          await fetch('/api/profile/update', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              theme: localStorage.getItem('theme') || 'system',
+              blind_mode: localStorage.getItem('blindMode') === 'true',
+              sound_enabled: localStorage.getItem('soundEnabled') !== 'false',
+              show_timer: localStorage.getItem('showTimer') !== 'false',
+            }),
           });
         } catch {}
       }, 1500);
@@ -81,5 +90,5 @@ export function useSettingsSync() {
       window.removeEventListener('storage', handleStorage);
       localStorage.setItem = origSetItem;
     };
-  }, [user]);
+  }, [user, getToken]);
 }

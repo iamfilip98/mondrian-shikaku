@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useUser, useClerk } from '@clerk/clerk-react';
+import { useUser, useClerk, useAuth as useClerkAuth } from '@clerk/clerk-react';
 import { getProfile } from '~/lib/supabase/queries';
-import { getSupabaseClient } from '~/lib/supabase/client';
 
 export interface Profile {
   id: string;
@@ -22,6 +21,7 @@ export interface Profile {
 export function useAuth() {
   const { user, isLoaded, isSignedIn } = useUser();
   const { signOut: clerkSignOut } = useClerk();
+  const { getToken } = useClerkAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
 
   const fetchProfile = useCallback(async (userId: string) => {
@@ -41,9 +41,9 @@ export function useAuth() {
 
     fetchProfile(user.id).then(async (existing) => {
       if (!existing) {
-        // First sign-in — auto-create profile
-        const supabase = getSupabaseClient();
-        if (!supabase) return;
+        // First sign-in — auto-create profile via server API
+        const token = await getToken();
+        if (!token) return;
 
         const username =
           user.username ||
@@ -51,17 +51,21 @@ export function useAuth() {
           user.primaryEmailAddress?.emailAddress?.split('@')[0] ||
           `player_${user.id.slice(0, 8)}`;
 
-        const { error } = await supabase.from('profiles').upsert({
-          id: user.id,
-          username,
-        }, { onConflict: 'id' });
+        const res = await fetch('/api/profile/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ username }),
+        });
 
-        if (!error) {
+        if (res.ok) {
           await fetchProfile(user.id);
         }
       }
     });
-  }, [isLoaded, isSignedIn, user, fetchProfile]);
+  }, [isLoaded, isSignedIn, user, fetchProfile, getToken]);
 
   const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
@@ -78,5 +82,6 @@ export function useAuth() {
     loading: !isLoaded,
     signOut,
     refreshProfile,
+    getToken,
   };
 }

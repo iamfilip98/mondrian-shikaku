@@ -5,8 +5,6 @@ import type { GridRect } from '~/lib/puzzle/types';
 import { useGameState } from '~/lib/hooks/useGameState';
 import { useSound } from '~/lib/hooks/useSound';
 import { useAuth } from '~/lib/hooks/useAuth';
-import { saveSolve } from '~/lib/supabase/queries';
-import { updateDailyStreak, incrementPuzzlesCompleted } from '~/lib/supabase/queries';
 import GameBoard from './GameBoard';
 import GameControls from './GameControls';
 import SettingsDrawer from './SettingsDrawer';
@@ -40,7 +38,7 @@ export default function GamePage({
 
   const gameState = useGameState(puzzle, blindMode);
   const sound = useSound();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, refreshProfile, getToken } = useAuth();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [introComplete, setIntroComplete] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -110,29 +108,37 @@ export default function GamePage({
       : puzzleType === 'Monthly' ? 'monthly'
       : 'free';
 
-    saveSolve({
-      userId: user.id,
-      puzzleType: puzzleTypeKey,
-      puzzleSeed,
-      difficulty,
-      gridWidth: puzzle.width,
-      gridHeight: puzzle.height,
-      solveTimeSeconds: gameState.elapsedSeconds,
-      hintsUsed: gameState.hintsUsed,
-      blindModeOn: blindMode,
-    }).then(async () => {
-      if (puzzleTypeKey === 'daily') {
-        await updateDailyStreak(user.id);
-        await refreshProfile();
-        const { getProfile } = await import('~/lib/supabase/queries');
-        const updatedProfile = await getProfile(user.id);
-        if (updatedProfile) setWinStreak(updatedProfile.daily_streak);
-      } else {
-        await incrementPuzzlesCompleted(user.id);
+    (async () => {
+      const token = await getToken();
+      if (!token) return;
+
+      const res = await fetch('/api/solve', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          puzzleType: puzzleTypeKey,
+          puzzleSeed,
+          difficulty,
+          gridWidth: puzzle.width,
+          gridHeight: puzzle.height,
+          solveTimeSeconds: gameState.elapsedSeconds,
+          hintsUsed: gameState.hintsUsed,
+          blindModeOn: blindMode,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (puzzleTypeKey === 'daily' && data.streak) {
+          setWinStreak(data.streak);
+        }
         await refreshProfile();
       }
-    });
-  }, [gameState.isComplete, user, puzzleSeed, puzzleType, difficulty, puzzle.width, puzzle.height, gameState.elapsedSeconds, gameState.hintsUsed, blindMode, refreshProfile]);
+    })();
+  }, [gameState.isComplete, user, puzzleSeed, puzzleType, difficulty, puzzle.width, puzzle.height, gameState.elapsedSeconds, gameState.hintsUsed, blindMode, refreshProfile, getToken]);
 
   // Cancel any in-progress game interaction
   const cancelInteraction = useCallback(() => {
