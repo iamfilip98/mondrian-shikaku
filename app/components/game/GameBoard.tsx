@@ -35,6 +35,18 @@ export default memo(function GameBoard({
   const svgWidth = cellSize * puzzle.width;
   const svgHeight = cellSize * puzzle.height;
 
+  // Proportional stroke widths anchored to daily (cellSize=34)
+  const stroke = useMemo(() => {
+    const scale = cellSize / 34;
+    return {
+      grid: 1,
+      rect: Math.max(1, scale * 5),
+      outer: Math.max(2, scale * 10),
+      preview: Math.max(1, scale * 2),
+      clueHalo: Math.max(1, scale * 4),
+    };
+  }, [cellSize]);
+
   // Build a map of which cells are covered
   const coverageMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -159,7 +171,7 @@ export default memo(function GameBoard({
             height={rect.height * cellSize}
             fill={rect.color}
             stroke="var(--color-border)"
-            strokeWidth={5}
+            strokeWidth={stroke.rect}
             style={{ cursor: 'pointer' }}
             onClick={(e) => {
               e.stopPropagation();
@@ -178,7 +190,7 @@ export default memo(function GameBoard({
               height={rect.height * cellSize}
               fill={rect.color}
               stroke="var(--color-border)"
-              strokeWidth={5}
+              strokeWidth={stroke.rect}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -197,13 +209,13 @@ export default memo(function GameBoard({
       {previewRect && (
         <>
           <rect
-            x={previewRect.col * cellSize + 1}
-            y={previewRect.row * cellSize + 1}
-            width={previewRect.width * cellSize - 2}
-            height={previewRect.height * cellSize - 2}
+            x={previewRect.col * cellSize + stroke.preview / 2}
+            y={previewRect.row * cellSize + stroke.preview / 2}
+            width={previewRect.width * cellSize - stroke.preview}
+            height={previewRect.height * cellSize - stroke.preview}
             fill="var(--color-preview)"
             stroke="var(--color-blue)"
-            strokeWidth={2}
+            strokeWidth={stroke.preview}
             pointerEvents="none"
           />
           {showDragCounter && (
@@ -216,7 +228,7 @@ export default memo(function GameBoard({
               style={{
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
-                fontSize: `clamp(14px, ${cellSize * 0.5}px, 28px)`,
+                fontSize: `${Math.max(5, cellSize * 0.5)}px`,
                 fill: 'var(--color-blue)',
                 opacity: 0.8,
                 userSelect: 'none',
@@ -236,7 +248,7 @@ export default memo(function GameBoard({
         height={svgHeight}
         fill="none"
         stroke="var(--color-grid-border)"
-        strokeWidth={10}
+        strokeWidth={stroke.outer}
       />
 
       {/* Layer 6: Clue numbers */}
@@ -257,12 +269,12 @@ export default memo(function GameBoard({
             textAnchor="middle"
             dominantBaseline="central"
             stroke={isCovered ? "none" : "var(--color-grid-bg)"}
-            strokeWidth={isCovered ? 0 : 4}
+            strokeWidth={isCovered ? 0 : stroke.clueHalo}
             paintOrder="stroke"
             style={{
               fontFamily: 'var(--font-body)',
               fontWeight: 700,
-              fontSize: `clamp(10px, ${cellSize * 0.42}px, 22px)`,
+              fontSize: `${Math.max(4, cellSize * 0.42)}px`,
               fontVariantNumeric: 'tabular-nums',
               fill: clueFill,
               pointerEvents: 'none',
@@ -277,10 +289,10 @@ export default memo(function GameBoard({
       {/* Layer 7: Start cell highlight (tap mode) */}
       {startCell && (
         <motion.rect
-          x={startCell.col * cellSize + 1}
-          y={startCell.row * cellSize + 1}
-          width={cellSize - 2}
-          height={cellSize - 2}
+          x={startCell.col * cellSize + stroke.preview / 2}
+          y={startCell.row * cellSize + stroke.preview / 2}
+          width={cellSize - stroke.preview}
+          height={cellSize - stroke.preview}
           fill="var(--color-select)"
           pointerEvents="none"
           animate={{

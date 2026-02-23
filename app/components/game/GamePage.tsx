@@ -88,19 +88,16 @@ export default function GamePage({
     if (typeof window === 'undefined') return 48;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    return Math.max(
-      Math.min(
-        Math.floor((vw * 0.92) / puzzle.width),
-        Math.floor((vh * 0.75) / puzzle.height),
-        64
-      ),
-      32
+    return Math.min(
+      Math.floor((vw * 0.92) / puzzle.width),
+      Math.floor((vh * 0.75) / puzzle.height),
+      64
     );
   }, [puzzle.width, puzzle.height]);
 
   const needsZoom = useMemo(
-    () => cellSize * puzzle.width > (typeof window !== 'undefined' ? window.innerWidth * 0.9 : 800),
-    [cellSize, puzzle.width]
+    () => cellSize < 28,
+    [cellSize]
   );
 
   // Win detection
@@ -444,7 +441,7 @@ export default function GamePage({
   return (
     <div className="flex flex-col items-center gap-4 py-4 px-4">
       {/* Controls */}
-      <div style={{ width: Math.min(svgWidth, typeof window !== 'undefined' ? window.innerWidth * 0.92 : svgWidth) }}>
+      <div style={{ width: svgWidth }}>
         <GameControls
           canUndo={gameState.canUndo}
           canRedo={gameState.canRedo}
@@ -463,11 +460,10 @@ export default function GamePage({
       {needsZoom ? (
         <TransformWrapper
           initialScale={1}
-          minScale={0.3}
-          maxScale={3}
-          centerOnInit={false}
-          initialPositionX={typeof window !== 'undefined' ? -((svgWidth - (window.innerWidth - 32)) / 2) : 0}
-          initialPositionY={0}
+          minScale={1}
+          maxScale={Math.max(3, Math.ceil(28 / cellSize))}
+          centerOnInit={true}
+          limitToBounds={true}
           doubleClick={{ disabled: true }}
           onPinchingStart={() => {
             isPinchingRef.current = true;
