@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router';
+import { motion } from 'framer-motion';
 import { useAuth } from '~/lib/hooks/useAuth';
+import { useTheme, type Theme } from '~/lib/hooks/useTheme';
+import { useSound } from '~/lib/hooks/useSound';
 import { useToast } from '~/lib/hooks/useToast';
 import { getUserStats } from '~/lib/supabase/queries';
 
@@ -45,12 +48,89 @@ function formatDate(iso: string): string {
   });
 }
 
+function Toggle({
+  value,
+  onChange,
+  label,
+}: {
+  value: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={() => onChange(!value)}
+      className="flex items-center justify-between w-full py-3 cursor-pointer"
+      style={{
+        fontFamily: 'var(--font-body)',
+        fontSize: 'var(--text-sm)',
+        color: 'var(--color-text)',
+        background: 'none',
+        border: 'none',
+      }}
+    >
+      <span>{label}</span>
+      <div
+        className="relative border-2 border-[var(--color-border)]"
+        style={{
+          width: '44px',
+          height: '24px',
+          backgroundColor: value ? 'var(--color-blue)' : 'var(--color-surface-2)',
+        }}
+      >
+        <motion.div
+          className="absolute top-0"
+          style={{
+            width: '18px',
+            height: '18px',
+            backgroundColor: 'var(--color-text)',
+            top: '1px',
+          }}
+          animate={{ left: value ? '21px' : '1px' }}
+          transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        />
+      </div>
+    </button>
+  );
+}
+
 export default function Profile() {
   const { user, profile, loading, refreshProfile, getToken } = useAuth();
   const { addToast } = useToast();
+  const { theme, setTheme } = useTheme();
+  const sound = useSound();
   const [stats, setStats] = useState<DifficultyStats[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [savingColor, setSavingColor] = useState(false);
+  const [blindMode, setBlindMode] = useState(false);
+  const [showTimer, setShowTimer] = useState(true);
+  const [showDragCounter, setShowDragCounter] = useState(true);
+
+  useEffect(() => {
+    try {
+      const b = localStorage.getItem('blindMode');
+      if (b !== null) setBlindMode(b === 'true');
+      const t = localStorage.getItem('showTimer');
+      if (t !== null) setShowTimer(t !== 'false');
+      const d = localStorage.getItem('showDragCounter');
+      if (d !== null) setShowDragCounter(d !== 'false');
+    } catch {}
+  }, []);
+
+  const handleBlindMode = useCallback((v: boolean) => {
+    setBlindMode(v);
+    try { localStorage.setItem('blindMode', String(v)); } catch {}
+  }, []);
+
+  const handleShowTimer = useCallback((v: boolean) => {
+    setShowTimer(v);
+    try { localStorage.setItem('showTimer', String(v)); } catch {}
+  }, []);
+
+  const handleShowDragCounter = useCallback((v: boolean) => {
+    setShowDragCounter(v);
+    try { localStorage.setItem('showDragCounter', String(v)); } catch {}
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -402,7 +482,7 @@ export default function Profile() {
       >
         Avatar Color
       </h2>
-      <div className="flex gap-3 items-center">
+      <div className="flex gap-3 items-center mb-10">
         {MONDRIAN_COLORS.map((color) => {
           const isActive = profile.avatar_color === color.value;
           return (
@@ -426,6 +506,92 @@ export default function Profile() {
             />
           );
         })}
+      </div>
+
+      {/* Settings */}
+      <h2
+        className="mb-4"
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'var(--text-2xl)',
+          color: 'var(--color-text)',
+        }}
+      >
+        Settings
+      </h2>
+      <div className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-2">
+        {/* Theme */}
+        <div className="py-3">
+          <span
+            className="block mb-2"
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-xs)',
+              fontWeight: 500,
+              color: 'var(--color-text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Theme
+          </span>
+          <div className="flex border-2 border-[var(--color-border)]">
+            {(['light', 'dark', 'system'] as Theme[]).map((opt) => (
+              <button
+                key={opt}
+                onClick={() => setTheme(opt)}
+                className="flex-1 flex items-center justify-center cursor-pointer relative"
+                style={{
+                  height: '40px',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-sm)',
+                  color:
+                    theme === opt
+                      ? 'var(--color-text-inverse)'
+                      : 'var(--color-text)',
+                  background: 'none',
+                  border: 'none',
+                  borderRightWidth: opt !== 'system' ? '2px' : '0',
+                  borderRightStyle: 'solid',
+                  borderRightColor: 'var(--color-border)',
+                }}
+              >
+                {theme === opt && (
+                  <motion.div
+                    layoutId="profile-theme"
+                    className="absolute inset-0"
+                    style={{ backgroundColor: 'var(--color-border)' }}
+                  />
+                )}
+                <span className="relative z-10 capitalize">{opt}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Toggles */}
+        <div className="border-t border-[var(--color-border-muted)]">
+          <Toggle
+            value={blindMode}
+            onChange={handleBlindMode}
+            label="Colour all rectangles"
+          />
+          <Toggle
+            value={sound.enabled}
+            onChange={sound.toggleSound}
+            label="Sound effects"
+          />
+          <Toggle
+            value={showTimer}
+            onChange={handleShowTimer}
+            label="Show timer"
+          />
+          <Toggle
+            value={showDragCounter}
+            onChange={handleShowDragCounter}
+            label="Show drag counter"
+          />
+        </div>
       </div>
     </div>
   );

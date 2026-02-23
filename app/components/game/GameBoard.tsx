@@ -164,7 +164,7 @@ export default memo(function GameBoard({
         // Skip Framer Motion on large grids for performance
         placed.map((rect, idx) => (
           <rect
-            key={`placed-${idx}-${rect.row}-${rect.col}`}
+            key={`placed-${rect.row}-${rect.col}-${rect.width}-${rect.height}`}
             x={rect.col * cellSize}
             y={rect.row * cellSize}
             width={rect.width * cellSize}
@@ -183,7 +183,7 @@ export default memo(function GameBoard({
         <AnimatePresence>
           {placed.map((rect, idx) => (
             <motion.rect
-              key={`placed-${idx}-${rect.row}-${rect.col}`}
+              key={`placed-${rect.row}-${rect.col}-${rect.width}-${rect.height}`}
               x={rect.col * cellSize}
               y={rect.row * cellSize}
               width={rect.width * cellSize}

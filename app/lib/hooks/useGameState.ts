@@ -201,38 +201,45 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
           (p._actuallyCorrect ?? p.isCorrect)
       );
       if (!alreadyPlaced) {
-        // Check no overlap with correctly placed rects
-        const hasOverlap = placed.some((p) => rectsOverlap(p, solRect));
-        if (!hasOverlap) {
-          const { isCorrect, clueIndex } = validateRect(solRect, puzzle.clues);
-          const newRect: PlacedRect = {
-            ...solRect,
-            color: '',
-            isCorrect: true,
-            clueIndex,
-          };
-          newRect._actuallyCorrect = true;
+        // Check if any correctly placed rects overlap — skip if so
+        const blockedByCorrect = placed.some(
+          (p) => (p._actuallyCorrect ?? p.isCorrect) && rectsOverlap(p, solRect)
+        );
+        if (blockedByCorrect) continue;
 
-          const newPlaced = recolorAll([...placed, newRect]);
-          setPlaced(newPlaced);
-          setHintsUsed((h) => h + 1);
+        // Remove any wrong rects that overlap with this hint
+        const remaining = placed.filter(
+          (p) => !rectsOverlap(p, solRect) || (p._actuallyCorrect ?? p.isCorrect)
+        );
 
-          const newHistory = history.slice(0, historyIndex + 1);
-          newHistory.push({ placed: newPlaced });
-          setHistory(newHistory);
-          setHistoryIndex(newHistory.length - 1);
+        const { isCorrect, clueIndex } = validateRect(solRect, puzzle.clues);
+        const newRect: PlacedRect = {
+          ...solRect,
+          color: '',
+          isCorrect: true,
+          clueIndex,
+        };
+        newRect._actuallyCorrect = true;
 
-          const complete = checkComplete(
-            newPlaced.map((p) => ({
-              ...p,
-              isCorrect: p._actuallyCorrect ?? p.isCorrect,
-            })),
-            puzzle
-          );
-          if (complete) setIsComplete(true);
+        const newPlaced = recolorAll([...remaining, newRect]);
+        setPlaced(newPlaced);
+        setHintsUsed((h) => h + 1);
 
-          return newRect;
-        }
+        const newHistory = history.slice(0, historyIndex + 1);
+        newHistory.push({ placed: newPlaced });
+        setHistory(newHistory);
+        setHistoryIndex(newHistory.length - 1);
+
+        const complete = checkComplete(
+          newPlaced.map((p) => ({
+            ...p,
+            isCorrect: p._actuallyCorrect ?? p.isCorrect,
+          })),
+          puzzle
+        );
+        if (complete) setIsComplete(true);
+
+        return newRect;
       }
     }
     return null;
