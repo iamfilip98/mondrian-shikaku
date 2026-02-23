@@ -1,7 +1,7 @@
 import type { GridRect } from './types';
 
-const MONDRIAN_COLORS = ['var(--color-red)', 'var(--color-yellow)', 'var(--color-blue)'];
-const MONDRIAN_HEX = ['#D40920', '#F9C30F', '#1356A2'];
+const MONDRIAN_COLORS = ['var(--color-red)', 'var(--color-yellow)', 'var(--color-blue)', 'var(--color-neutral)'];
+const MONDRIAN_HEX = ['#D40920', '#F9C30F', '#1356A2', '#0A0A0A'];
 
 function sharesEdge(a: GridRect, b: GridRect): boolean {
   // Check if two rectangles share an edge (not just a corner)

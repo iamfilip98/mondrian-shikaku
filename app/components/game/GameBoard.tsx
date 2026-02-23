@@ -245,8 +245,9 @@ export default memo(function GameBoard({
         const isCovered = coveredIdx !== undefined;
         const coveredColor = isCovered ? placed[coveredIdx].color : null;
         const isLightBg = coveredColor === 'var(--color-yellow)';
+        const isNeutral = coveredColor === 'var(--color-neutral)';
         const clueFill = isCovered
-          ? isLightBg ? 'var(--color-black)' : 'var(--color-white)'
+          ? isNeutral ? 'var(--color-bg)' : (isLightBg ? 'var(--color-black)' : 'var(--color-white)')
           : 'var(--color-text)';
         return (
           <text

@@ -69,6 +69,7 @@
   --color-grid-bg:      #F5F5F0;
   --color-grid-line:    #CCCCCC;
   --color-grid-border:  #0A0A0A;
+  --color-neutral:      #0A0A0A;
 }
 
 /* ── Dark Mode — Full Inversion ── */
@@ -84,6 +85,7 @@
   --color-grid-bg:      #0D0D0D;
   --color-grid-line:    #3A3A3A;
   --color-grid-border:  #E8E8E0;
+  --color-neutral:      #F5F5F0;
 }
 
 /* ── Base Reset ── */
