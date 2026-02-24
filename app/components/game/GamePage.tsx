@@ -62,6 +62,8 @@ export default function GamePage({
   const activePointersRef = useRef(new Set<number>());
   const isPinchingRef = useRef(false);
   const pinchCooldownRef = useRef(false);
+  const isPanningRef = useRef(false);
+  const panCooldownRef = useRef(false);
   const pendingRemovalRef = useRef<{ index: number; x: number; y: number } | null>(null);
 
   // Solve submission guard
@@ -229,7 +231,7 @@ export default function GamePage({
         cancelInteraction();
         return;
       }
-      if (isPinchingRef.current || pinchCooldownRef.current) return;
+      if (isPinchingRef.current || pinchCooldownRef.current || isPanningRef.current || panCooldownRef.current) return;
 
       // Check if there's a placed rect — defer removal to pointerUp
       const existing = gameState.getRectAtCell(row, col);
@@ -248,7 +250,7 @@ export default function GamePage({
   const handleCellPointerMove = useCallback(
     (row: number, col: number) => {
       if (!pointerStartRef.current || gameState.isComplete) return;
-      if (isPinchingRef.current || pinchCooldownRef.current) return;
+      if (isPinchingRef.current || pinchCooldownRef.current || isPanningRef.current || panCooldownRef.current) return;
 
       const start = pointerStartRef.current;
 
@@ -284,7 +286,7 @@ export default function GamePage({
 
       // Multi-pointer tracking
       activePointersRef.current.delete(e.pointerId);
-      if (isPinchingRef.current || pinchCooldownRef.current) {
+      if (isPinchingRef.current || pinchCooldownRef.current || isPanningRef.current || panCooldownRef.current) {
         cancelInteraction();
         if (activePointersRef.current.size === 0 && isPinchingRef.current) {
           pinchCooldownRef.current = true;
@@ -475,6 +477,17 @@ export default function GamePage({
               isPinchingRef.current = false;
               pinchCooldownRef.current = false;
             }, 100);
+          }}
+          onPanningStart={() => {
+            isPanningRef.current = true;
+            cancelInteraction();
+          }}
+          onPanningStop={() => {
+            panCooldownRef.current = true;
+            setTimeout(() => {
+              isPanningRef.current = false;
+              panCooldownRef.current = false;
+            }, 200);
           }}
         >
           <TransformComponent
