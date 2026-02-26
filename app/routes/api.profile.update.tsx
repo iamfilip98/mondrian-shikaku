@@ -3,12 +3,15 @@ import { getAuthUserId } from '~/lib/auth/verify.server';
 import { getServerSupabase } from '~/lib/supabase/server';
 
 const ALLOWED_FIELDS = new Set([
+  'username',
   'avatar_color',
   'theme',
   'blind_mode',
   'sound_enabled',
   'show_timer',
 ]);
+
+const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,30}$/;
 
 export async function action({ request }: ActionFunctionArgs) {
   const userId = await getAuthUserId(request);
@@ -25,21 +28,26 @@ export async function action({ request }: ActionFunctionArgs) {
     const value = body[key];
 
     switch (key) {
+      case 'username':
+        if (typeof value !== 'string' || !USERNAME_PATTERN.test(value)) {
+          return Response.json({ error: 'Invalid request.' }, { status: 400 });
+        }
+        break;
       case 'theme':
         if (value !== 'light' && value !== 'dark' && value !== 'system') {
-          return Response.json({ error: 'Invalid theme value' }, { status: 400 });
+          return Response.json({ error: 'Invalid request.' }, { status: 400 });
         }
         break;
       case 'blind_mode':
       case 'sound_enabled':
       case 'show_timer':
         if (typeof value !== 'boolean') {
-          return Response.json({ error: `${key} must be a boolean` }, { status: 400 });
+          return Response.json({ error: 'Invalid request.' }, { status: 400 });
         }
         break;
       case 'avatar_color':
         if (typeof value !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(value)) {
-          return Response.json({ error: 'Invalid avatar_color format' }, { status: 400 });
+          return Response.json({ error: 'Invalid request.' }, { status: 400 });
         }
         break;
     }
@@ -59,7 +67,8 @@ export async function action({ request }: ActionFunctionArgs) {
     .eq('id', userId);
 
   if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[api.profile.update] Error:', error.message);
+    return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 
   return Response.json({ ok: true });

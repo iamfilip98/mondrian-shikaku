@@ -2,6 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
+import { useFocusTrap } from '~/lib/hooks/useFocusTrap';
 import type { Difficulty } from '~/lib/puzzle/types';
 
 interface WinModalProps {
@@ -37,6 +38,8 @@ export default function WinModal({
   onShare,
   onClose,
 }: WinModalProps) {
+  const focusTrapRef = useFocusTrap(isOpen, onClose);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -53,6 +56,10 @@ export default function WinModal({
 
           {/* Modal */}
           <motion.div
+            ref={focusTrapRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Puzzle completed"
             className="fixed z-50 bg-[var(--color-bg)] border-2 border-[var(--color-border)] shadow-sharp-xl"
             style={{
               top: '50%',

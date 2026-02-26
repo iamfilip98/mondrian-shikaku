@@ -2,8 +2,19 @@ import type { GridRect, Clue, PlacedRect, Puzzle } from './types';
 
 export function validateRect(
   rect: GridRect,
-  clues: Clue[]
+  clues: Clue[],
+  puzzleWidth?: number,
+  puzzleHeight?: number,
 ): { isCorrect: boolean; clueIndex: number } {
+  // Bounds check if puzzle dimensions are provided
+  if (puzzleWidth !== undefined && puzzleHeight !== undefined) {
+    if (rect.row < 0 || rect.col < 0 ||
+        rect.row + rect.height > puzzleHeight ||
+        rect.col + rect.width > puzzleWidth) {
+      return { isCorrect: false, clueIndex: -1 };
+    }
+  }
+
   const area = rect.width * rect.height;
   const containedClues: { clue: Clue; index: number }[] = [];
 
@@ -44,6 +55,7 @@ export function checkComplete(placed: PlacedRect[], puzzle: Puzzle): boolean {
     if (!rect.isCorrect) return false;
     for (let r = rect.row; r < rect.row + rect.height; r++) {
       for (let c = rect.col; c < rect.col + rect.width; c++) {
+        if (r < 0 || r >= puzzle.height || c < 0 || c >= puzzle.width) continue;
         grid[r][c] = true;
       }
     }

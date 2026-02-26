@@ -103,7 +103,7 @@ export default function Home() {
       {/* Hero */}
       <section
         className="relative w-full overflow-hidden"
-        style={{ minHeight: '520px', backgroundColor: '#0D0D0D' }}
+        style={{ minHeight: '520px', backgroundColor: 'var(--color-bg)' }}
       >
         <svg
           className="absolute inset-0 w-full h-full"
@@ -119,7 +119,7 @@ export default function Home() {
               width={block.w}
               height={block.h}
               fill={block.color}
-              stroke="#E8E8E0"
+              stroke="var(--color-text)"
               strokeWidth={3}
               animate={{
                 scale: [1, 1.015, 1],
@@ -140,7 +140,7 @@ export default function Home() {
             style={{
               fontFamily: 'var(--font-display)',
               fontSize: 'clamp(2.5rem, 8vw, 5.5rem)',
-              color: '#E8E8E0',
+              color: 'var(--color-text)',
               lineHeight: 'var(--leading-tight)',
               letterSpacing: '-0.02em',
               textAlign: 'center',
@@ -154,7 +154,7 @@ export default function Home() {
               fontFamily: 'var(--font-body)',
               fontWeight: 300,
               fontSize: 'var(--text-lg)',
-              color: 'rgba(232, 232, 224, 0.6)',
+              color: 'var(--color-text-muted)',
               textAlign: 'center',
             }}
           >
@@ -170,7 +170,7 @@ export default function Home() {
               <Button
                 variant="outline"
                 size="lg"
-                className="!text-[#E8E8E0] !border-[#E8E8E0]"
+                className="!text-[var(--color-text)] !border-[var(--color-text)]"
               >
                 How to Play
               </Button>

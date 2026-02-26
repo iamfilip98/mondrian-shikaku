@@ -51,7 +51,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <script dangerouslySetInnerHTML={{ __html: initThemeScript }} />
         <Meta />
         <Links />

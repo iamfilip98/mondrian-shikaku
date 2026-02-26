@@ -68,10 +68,8 @@ export default memo(function GameBoard({
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       // Use visual size from bounding rect to stay accurate under zoom transforms
-      const col = Math.floor((x / rect.width) * puzzle.width);
-      const row = Math.floor((y / rect.height) * puzzle.height);
-      if (row < 0 || row >= puzzle.height || col < 0 || col >= puzzle.width)
-        return null;
+      const col = Math.max(0, Math.min(puzzle.width - 1, Math.floor((x / rect.width) * puzzle.width)));
+      const row = Math.max(0, Math.min(puzzle.height - 1, Math.floor((y / rect.height) * puzzle.height)));
       return { row, col };
     },
     [puzzle.width, puzzle.height]

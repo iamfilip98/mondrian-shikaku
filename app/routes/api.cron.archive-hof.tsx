@@ -14,7 +14,8 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const { data, error } = await supabase.rpc('archive_monthly_winners');
 
   if (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('[api.cron.archive-hof] Error:', error.message);
+    return Response.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 
   return Response.json(data);

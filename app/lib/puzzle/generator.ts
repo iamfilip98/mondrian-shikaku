@@ -291,10 +291,27 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
   // Return best attempt or generate a simple fallback
   if (bestPuzzle) return bestPuzzle;
 
-  // Ultimate fallback: simple partition with the original seed
-  const fallbackRng = mulberry32(config.seed + '_fallback');
+  // Ultimate fallback: simple partition with solver verification
+  for (let fb = 0; fb < 3; fb++) {
+    const fallbackRng = mulberry32(config.seed + '_fallback' + (fb > 0 ? `_${fb}` : ''));
+    const fullRegion: Region = { row: 0, col: 0, width, height };
+    const rects = partition(fullRegion, config.difficulty, fallbackRng);
+    const clues = placeClues(rects, fallbackRng);
+    const puzzle: Puzzle = { width, height, clues, solution: rects };
+
+    // Verify solvability for non-large grids
+    if (totalCells <= 500) {
+      const result = solve(puzzle, false, 10000);
+      if (!result.solution) continue;
+    }
+
+    return puzzle;
+  }
+
+  // Last resort: return without verification
+  const lastRng = mulberry32(config.seed + '_last');
   const fullRegion: Region = { row: 0, col: 0, width, height };
-  const rects = partition(fullRegion, config.difficulty, fallbackRng);
-  const clues = placeClues(rects, fallbackRng);
+  const rects = partition(fullRegion, config.difficulty, lastRng);
+  const clues = placeClues(rects, lastRng);
   return { width, height, clues, solution: rects };
 }

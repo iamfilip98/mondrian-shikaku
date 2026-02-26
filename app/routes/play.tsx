@@ -151,6 +151,7 @@ export default function Play() {
           </span>
         </div>
         <GamePage
+          key={puzzleSeed}
           puzzle={puzzle}
           difficulty={selected}
           puzzleType="Free Play"

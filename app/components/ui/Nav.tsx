@@ -174,6 +174,8 @@ export default function Nav() {
           }}
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+          aria-controls="mobile-menu"
         >
           {menuOpen ? '✕' : '☰'}
         </button>
@@ -183,6 +185,7 @@ export default function Nav() {
       <AnimatePresence>
         {menuOpen && (
           <motion.div
+            id="mobile-menu"
             className="md:hidden absolute left-0 right-0 z-50 bg-[var(--color-bg)] border-b-[3px] border-[var(--color-border)]"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}

@@ -10,7 +10,6 @@ interface GameControlsProps {
   showTimer: boolean;
   hintsRemaining: number;
   onHint: () => void;
-  onClear: () => void;
   onSettings: () => void;
 }
 

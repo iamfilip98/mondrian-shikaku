@@ -12,6 +12,8 @@ export default function ToastContainer() {
 
   return (
     <div
+      role="status"
+      aria-live="polite"
       style={{
         position: 'fixed',
         bottom: '24px',
@@ -32,7 +34,6 @@ export default function ToastContainer() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
-            onClick={() => removeToast(toast.id)}
             style={{
               pointerEvents: 'auto',
               cursor: 'pointer',
@@ -48,9 +49,28 @@ export default function ToastContainer() {
               minWidth: '200px',
               maxWidth: '360px',
               textAlign: 'center',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
             }}
           >
-            {toast.message}
+            <span style={{ flex: 1 }}>{toast.message}</span>
+            <button
+              onClick={() => removeToast(toast.id)}
+              aria-label="Dismiss"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--color-text-muted)',
+                fontSize: 'var(--text-sm)',
+                padding: '0 2px',
+                lineHeight: 1,
+                flexShrink: 0,
+              }}
+            >
+              ✕
+            </button>
           </motion.div>
         ))}
       </AnimatePresence>

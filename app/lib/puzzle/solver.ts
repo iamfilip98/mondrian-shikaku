@@ -140,9 +140,9 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
     return true;
   }
 
-  function backtrack(): void {
+  function backtrack(depth = 0): void {
     nodeCount++;
-    if (nodeCount > maxNodes) return;
+    if (depth > 500 || nodeCount > maxNodes) return;
 
     // Save state for restore
     const savedPlacedLen = state.placed.length;
@@ -230,7 +230,7 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
       state.placed.push(candidate);
       state.clueResolved[bestIdx] = true;
 
-      backtrack();
+      backtrack(depth + 1);
 
       // Restore after trying this candidate
       state.placed.length = innerSavedLen;

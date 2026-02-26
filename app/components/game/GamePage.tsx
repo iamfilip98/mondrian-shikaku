@@ -120,6 +120,10 @@ export default function GamePage({
       sound.playWinChord();
     }, 800);
   }
+  // Reset win detection when isComplete goes from true → false (undo after win)
+  if (!gameState.isComplete && prevCompleteRef.current) {
+    prevCompleteRef.current = false;
+  }
 
   // Submit solve when game completes (with retry)
   useEffect(() => {
@@ -205,7 +209,7 @@ export default function GamePage({
         setTimeout(() => {
           isPinchingRef.current = false;
           pinchCooldownRef.current = false;
-        }, 100);
+        }, 50);
       }
     };
     const handlePointerCancel = (e: PointerEvent) => {
@@ -304,7 +308,7 @@ export default function GamePage({
         pendingRemovalRef.current = null;
         const dx = e.clientX - pr.x;
         const dy = e.clientY - pr.y;
-        if (Math.hypot(dx, dy) < 16) {
+        if (Math.hypot(dx, dy) < Math.max(cellSize * 0.6, 16)) {
           gameState.removeRect(pr.index);
         }
         return;
@@ -338,7 +342,7 @@ export default function GamePage({
         const start = pointerStartRef.current;
         const dx = e.clientX - start.x;
         const dy = e.clientY - start.y;
-        if (Math.hypot(dx, dy) < 10) {
+        if (Math.hypot(dx, dy) < Math.max(cellSize * 0.5, 10)) {
           if (row === start.row && col === start.col) {
             if (gameState.startCell) {
               if (gameState.startCell.row === row && gameState.startCell.col === col) {
@@ -405,9 +409,12 @@ export default function GamePage({
       } else {
         await navigator.clipboard.writeText(text);
         trackEvent('share_result', { method: 'clipboard' });
+        addToast('Copied to clipboard!', 'success');
       }
-    } catch {}
-  }, [puzzleType, difficulty, gameState.elapsedSeconds]);
+    } catch {
+      addToast('Could not share. Please try again.', 'error');
+    }
+  }, [puzzleType, difficulty, gameState.elapsedSeconds, addToast]);
 
   const svgWidth = cellSize * puzzle.width;
   const svgHeight = cellSize * puzzle.height;
@@ -453,7 +460,6 @@ export default function GamePage({
           showTimer={gameState.showTimer}
           hintsRemaining={gameState.hintsRemaining}
           onHint={handleHint}
-          onClear={gameState.clearAll}
           onSettings={() => setSettingsOpen(true)}
         />
       </div>
@@ -487,7 +493,7 @@ export default function GamePage({
             setTimeout(() => {
               isPanningRef.current = false;
               panCooldownRef.current = false;
-            }, 200);
+            }, 100);
           }}
         >
           <TransformComponent

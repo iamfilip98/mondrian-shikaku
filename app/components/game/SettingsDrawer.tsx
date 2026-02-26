@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme, type Theme } from '~/lib/hooks/useTheme';
+import { useFocusTrap } from '~/lib/hooks/useFocusTrap';
 
 interface SettingsDrawerProps {
   isOpen: boolean;
@@ -25,6 +26,8 @@ function Toggle({
 }) {
   return (
     <button
+      role="switch"
+      aria-checked={value}
       onClick={() => onChange(!value)}
       className="flex items-center justify-between w-full py-3 cursor-pointer"
       style={{
@@ -73,6 +76,7 @@ export default function SettingsDrawer({
   onShowDragCounterChange,
 }: SettingsDrawerProps) {
   const { theme, setTheme } = useTheme();
+  const focusTrapRef = useFocusTrap(isOpen, onClose);
 
   return (
     <AnimatePresence>
@@ -90,6 +94,10 @@ export default function SettingsDrawer({
 
           {/* Drawer */}
           <motion.div
+            ref={focusTrapRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Settings"
             className="fixed top-0 right-0 bottom-0 z-50 bg-[var(--color-bg)] border-l-2 border-[var(--color-border)] shadow-sharp-xl overflow-y-auto"
             style={{ width: 'min(320px, 100vw)' }}
             initial={{ x: '100%' }}

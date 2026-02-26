@@ -16,6 +16,13 @@ function formatTime(ms: number): string {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 }
 
+function getLocalResetTime(): string {
+  // Midnight UTC in local time
+  const now = new Date();
+  const midnightUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+  return midnightUTC.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
 export default function Countdown({ targetMs, className = '' }: CountdownProps) {
   const [remaining, setRemaining] = useState(targetMs);
 
@@ -27,6 +34,20 @@ export default function Countdown({ targetMs, className = '' }: CountdownProps) 
 
     return () => clearInterval(interval);
   }, [targetMs]);
+
+  if (remaining <= 0) {
+    return (
+      <span
+        className={`tabular-nums font-bold inline-block ${className}`}
+        style={{
+          fontFamily: 'var(--font-body)',
+          textAlign: 'center',
+        }}
+      >
+        New puzzle available!
+      </span>
+    );
+  }
 
   return (
     <span
@@ -40,6 +61,24 @@ export default function Countdown({ targetMs, className = '' }: CountdownProps) 
     >
       {formatTime(remaining)}
     </span>
+  );
+}
+
+export function CountdownWithReset({ targetMs, className = '' }: CountdownProps) {
+  return (
+    <div className={`flex flex-col items-center ${className}`}>
+      <Countdown targetMs={targetMs} />
+      <span
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-xs)',
+          color: 'var(--color-text-muted)',
+          marginTop: '4px',
+        }}
+      >
+        Resets at {getLocalResetTime()} local
+      </span>
+    </div>
   );
 }
 
