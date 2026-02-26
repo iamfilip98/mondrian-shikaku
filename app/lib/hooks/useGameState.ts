@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { setSettingItem } from '~/lib/utils/settingStorage';
 import type { Puzzle, GridRect, PlacedRect } from '~/lib/puzzle/types';
-import { assignColors, getUnlockedColors } from '~/lib/puzzle/graphColor';
+import { assignColors, colorSingleRect, getUnlockedColors } from '~/lib/puzzle/graphColor';
 import { validateRect, rectsOverlap, checkComplete } from '~/lib/puzzle/gameLogic';
 
 export type { PlacedRect } from '~/lib/puzzle/types';
@@ -40,7 +41,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
   });
   const setShowTimer = useCallback((value: boolean) => {
     setShowTimerState(value);
-    try { localStorage.setItem('showTimer', String(value)); } catch {}
+    try { setSettingItem('showTimer', String(value)); } catch {}
   }, []);
   const startTimestampRef = useRef<number>(Date.now());
   const frozenTimeRef = useRef<number | null>(null);
@@ -58,7 +59,10 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
       }
       if (timerRef.current) clearInterval(timerRef.current);
       timerRef.current = null;
-      return;
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+        timerRef.current = null;
+      };
     }
 
     // If we un-complete (undo after win), resume from frozen time
@@ -126,6 +130,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
     (rect: GridRect): PlacedRect | null => {
       // Check overlaps with existing
       const nonOverlapping = placed.filter((p) => !rectsOverlap(p, rect));
+      const removedOverlaps = placed.length - nonOverlapping.length;
 
       const { isCorrect, clueIndex } = validateRect(rect, puzzle.clues, puzzle.width, puzzle.height);
 
@@ -139,7 +144,32 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
       // Store actual correctness for win detection in blind mode
       newRect._actuallyCorrect = isCorrect;
 
-      const newPlaced = recolorAll([...nonOverlapping, newRect]);
+      // Optimize: if no overlapping rects were removed, assign color to just the new rect
+      let newPlaced: PlacedRect[];
+      if (removedOverlaps === 0 && nonOverlapping.length > 0) {
+        const shouldColor = (newRect._actuallyCorrect ?? newRect.isCorrect) || blindMode;
+        if (shouldColor) {
+          const existingGridRects = nonOverlapping
+            .filter((r) => (r._actuallyCorrect ?? r.isCorrect) || blindMode)
+            .map((r) => ({ row: r.row, col: r.col, width: r.width, height: r.height }));
+          const existingColors = nonOverlapping
+            .filter((r) => (r._actuallyCorrect ?? r.isCorrect) || blindMode)
+            .map((r) => r.color);
+          const gridRect = { row: rect.row, col: rect.col, width: rect.width, height: rect.height };
+
+          if (blindMode && !(newRect._actuallyCorrect ?? newRect.isCorrect)) {
+            newRect.color = 'var(--color-surface-2)';
+          } else {
+            newRect.color = colorSingleRect(gridRect, existingGridRects, existingColors, unlockedColors);
+          }
+        } else {
+          newRect.color = 'var(--color-wrong)';
+        }
+        newPlaced = [...nonOverlapping, newRect];
+      } else {
+        newPlaced = recolorAll([...nonOverlapping, newRect]);
+      }
+
       setPlaced(newPlaced);
       pushHistory(newPlaced);
 
@@ -228,7 +258,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
           (p) => !rectsOverlap(p, solRect) || (p._actuallyCorrect ?? p.isCorrect)
         );
 
-        const { isCorrect, clueIndex } = validateRect(solRect, puzzle.clues);
+        const { clueIndex } = validateRect(solRect, puzzle.clues);
         const newRect: PlacedRect = {
           ...solRect,
           color: '',

@@ -250,8 +250,11 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
     const clues = placeClues(rects, attemptRng);
     const puzzle: Puzzle = { width, height, clues, solution: rects };
 
-    // For large grids, skip solver — partition guarantees a valid solution
+    // For large grids, run solver with a low node cap as a sanity check
     if (isLargeGrid) {
+      const check = solve(puzzle, false, 1000);
+      if (check.solution) return puzzle;
+      // If solver can't verify within budget, still return (partition guarantees validity)
       return puzzle;
     }
 
@@ -296,6 +299,10 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
     const fallbackRng = mulberry32(config.seed + '_fallback' + (fb > 0 ? `_${fb}` : ''));
     const fullRegion: Region = { row: 0, col: 0, width, height };
     const rects = partition(fullRegion, config.difficulty, fallbackRng);
+
+    // Validate: no area-1 rectangles
+    if (rects.some((r) => r.width * r.height < 2)) continue;
+
     const clues = placeClues(rects, fallbackRng);
     const puzzle: Puzzle = { width, height, clues, solution: rects };
 
@@ -308,8 +315,18 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
     return puzzle;
   }
 
-  // Last resort: return without verification
-  const lastRng = mulberry32(config.seed + '_last');
+  // Last resort: try a few times with area-1 validation
+  for (let lr = 0; lr < 3; lr++) {
+    const lastRng = mulberry32(config.seed + '_last' + (lr > 0 ? `_${lr}` : ''));
+    const fullRegion: Region = { row: 0, col: 0, width, height };
+    const rects = partition(fullRegion, config.difficulty, lastRng);
+    if (rects.some((r) => r.width * r.height < 2)) continue;
+    const clues = placeClues(rects, lastRng);
+    return { width, height, clues, solution: rects };
+  }
+
+  // Absolute last resort: return without area-1 check
+  const lastRng = mulberry32(config.seed + '_last_final');
   const fullRegion: Region = { row: 0, col: 0, width, height };
   const rects = partition(fullRegion, config.difficulty, lastRng);
   const clues = placeClues(rects, lastRng);

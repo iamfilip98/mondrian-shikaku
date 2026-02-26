@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useAuth, type Profile } from './useAuth';
 import { useTheme } from './useTheme';
-import { useToast } from './useToast';
 
 /**
  * Syncs settings between localStorage and Supabase profile.
@@ -11,7 +10,6 @@ import { useToast } from './useToast';
 export function useSettingsSync() {
   const { user, profile, getToken } = useAuth();
   const { setTheme } = useTheme();
-  const { addToast } = useToast();
   const lastSyncedRef = useRef<string | null>(null);
 
   // On login: pull profile settings → localStorage
@@ -84,18 +82,18 @@ export function useSettingsSync() {
       doSync();
     };
 
-    // Same-tab changes: intercept localStorage.setItem
-    const origSetItem = localStorage.setItem.bind(localStorage);
-    localStorage.setItem = function (key: string, value: string) {
-      origSetItem(key, value);
-      if (syncKeys.includes(key)) doSync();
+    // Same-tab changes: listen for custom event from setSettingItem
+    const handleSettingChange = (e: Event) => {
+      const key = (e as CustomEvent).detail?.key;
+      if (key && syncKeys.includes(key)) doSync();
     };
 
     window.addEventListener('storage', handleStorage);
+    window.addEventListener('setting-change', handleSettingChange);
     return () => {
       clearTimeout(timer);
       window.removeEventListener('storage', handleStorage);
-      localStorage.setItem = origSetItem;
+      window.removeEventListener('setting-change', handleSettingChange);
     };
   }, [user, getToken]);
 }

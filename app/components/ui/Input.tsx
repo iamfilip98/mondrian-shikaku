@@ -28,6 +28,8 @@ export default function Input({
       </label>
       <input
         id={inputId}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${inputId}-error` : undefined}
         className={`
           w-full h-[48px] px-4
           bg-[var(--color-surface)]
@@ -63,6 +65,8 @@ export default function Input({
       />
       {error && (
         <span
+          id={`${inputId}-error`}
+          role="alert"
           className="text-[var(--text-xs)]"
           style={{ color: 'var(--color-red)', fontFamily: 'var(--font-body)' }}
         >

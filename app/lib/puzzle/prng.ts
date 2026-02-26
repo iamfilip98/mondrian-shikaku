@@ -1,4 +1,5 @@
 export function mulberry32(seedStr: string): () => number {
+  if (!seedStr) throw new Error('PRNG seed cannot be empty');
   let h = 0;
   for (let i = 0; i < seedStr.length; i++) {
     h = (Math.imul(31, h) + seedStr.charCodeAt(i)) | 0;

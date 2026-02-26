@@ -14,6 +14,11 @@ export function meta() {
         'Practice Shikaku puzzles at any difficulty. From Easy to Nightmare. No registration required.',
     },
     { property: 'og:title', content: 'Free Play — Mondrian Shikaku' },
+    { property: 'og:image', content: 'https://mondrianshikaku.com/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:image', content: 'https://mondrianshikaku.com/og-image.png' },
   ];
 }
 
@@ -101,15 +106,33 @@ export default function Play() {
               ← Back
             </button>
           </div>
-          <div
-            className="flex items-center justify-center py-24"
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontSize: 'var(--text-sm)',
-              color: 'var(--color-text-muted)',
-            }}
-          >
-            Generating puzzle...
+          <div className="flex flex-col items-center justify-center py-24 gap-4">
+            <div className="flex gap-2">
+              <motion.div
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity }}
+                style={{ width: 16, height: 16, backgroundColor: 'var(--color-red)' }}
+              />
+              <motion.div
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: 0.2 }}
+                style={{ width: 16, height: 16, backgroundColor: 'var(--color-blue)' }}
+              />
+              <motion.div
+                animate={{ opacity: [0.3, 1, 0.3] }}
+                transition={{ duration: 1.2, repeat: Infinity, delay: 0.4 }}
+                style={{ width: 16, height: 16, backgroundColor: 'var(--color-yellow)' }}
+              />
+            </div>
+            <span
+              style={{
+                fontFamily: 'var(--font-body)',
+                fontSize: 'var(--text-sm)',
+                color: 'var(--color-text-muted)',
+              }}
+            >
+              Generating puzzle...
+            </span>
           </div>
         </div>
       );

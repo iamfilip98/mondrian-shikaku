@@ -26,7 +26,11 @@ export function meta() {
       content: 'A Mondrian-inspired Shikaku puzzle game. Logic is an art form.',
     },
     { property: 'og:type', content: 'website' },
+    { property: 'og:image', content: 'https://mondrianshikaku.com/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
     { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:image', content: 'https://mondrianshikaku.com/og-image.png' },
   ];
 }
 
@@ -68,6 +72,22 @@ export default function Home() {
 
   return (
     <div>
+      {/* JSON-LD structured data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'WebApplication',
+            name: 'Mondrian Shikaku',
+            description: 'A premium Shikaku logic puzzle game inspired by Piet Mondrian. Divide the grid into rectangles. Pure logic, no guessing.',
+            applicationCategory: 'Game',
+            operatingSystem: 'Web',
+            url: 'https://mondrianshikaku.com',
+          }),
+        }}
+      />
+
       {/* Streak banner */}
       {profile && profile.daily_streak > 0 && (
         <div

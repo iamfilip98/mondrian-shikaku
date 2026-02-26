@@ -183,6 +183,10 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* ── Scrollbar styling ── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border-muted) var(--color-bg);
+}
 ::-webkit-scrollbar {
   width: 8px;
 }

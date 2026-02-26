@@ -1,7 +1,7 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useNavigate, useLoaderData } from 'react-router';
 import { getDailyPuzzle, getTimeUntilMidnightUTC } from '~/lib/puzzle/scheduled';
-import type { Puzzle } from '~/lib/puzzle/types';
+
 import Countdown from '~/components/ui/Countdown';
 import GamePage from '~/components/game/GamePage';
 import ScheduledComplete from '~/components/game/ScheduledComplete';

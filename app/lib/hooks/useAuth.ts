@@ -40,12 +40,15 @@ export function useAuth() {
       return;
     }
 
+    let cancelled = false;
+
     fetchProfile(user.id).then(async (existing) => {
+      if (cancelled) return;
       if (!existing) {
         // First sign-in — auto-create profile via server API
         try {
           const token = await getToken();
-          if (!token) return;
+          if (cancelled || !token) return;
 
           const username =
             user.username ||
@@ -62,6 +65,7 @@ export function useAuth() {
             body: JSON.stringify({ username }),
           });
 
+          if (cancelled) return;
           if (res.ok) {
             setProfileError(null);
             await fetchProfile(user.id);
@@ -69,10 +73,12 @@ export function useAuth() {
             setProfileError('Failed to create profile. Please try again.');
           }
         } catch {
-          setProfileError('Network error creating profile.');
+          if (!cancelled) setProfileError('Network error creating profile.');
         }
       }
     });
+
+    return () => { cancelled = true; };
   }, [isLoaded, isSignedIn, user, fetchProfile, getToken]);
 
   const refreshProfile = useCallback(async () => {

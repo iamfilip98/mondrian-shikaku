@@ -9,6 +9,12 @@ export function meta() {
       content: 'Articles about Shikaku puzzles, Piet Mondrian, and the mathematics behind logic puzzles.',
     },
     { property: 'og:title', content: 'Blog — Mondrian Shikaku' },
+    { property: 'og:description', content: 'Articles about Shikaku puzzles, Piet Mondrian, and the mathematics behind logic puzzles.' },
+    { property: 'og:image', content: 'https://mondrianshikaku.com/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:image', content: 'https://mondrianshikaku.com/og-image.png' },
   ];
 }
 
@@ -59,7 +65,7 @@ export default function BlogIndex() {
           gridTemplateColumns: '1fr',
         }}
       >
-        {articles.map((article, i) => (
+        {articles.map((article) => (
           <Link key={article.slug} to={`/blog/${article.slug}`}>
             <motion.article
               className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-sharp p-6"

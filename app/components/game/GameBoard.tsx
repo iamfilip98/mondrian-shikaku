@@ -78,6 +78,8 @@ export default memo(function GameBoard({
   return (
     <svg
       ref={svgRef}
+      role="img"
+      aria-label={`Shikaku puzzle board, ${puzzle.width} columns by ${puzzle.height} rows`}
       width={svgWidth}
       height={svgHeight}
       viewBox={`0 0 ${svgWidth} ${svgHeight}`}

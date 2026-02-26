@@ -1,4 +1,5 @@
 import { createContext, useContext, useCallback, useEffect, useState } from 'react';
+import { setSettingItem } from '~/lib/utils/settingStorage';
 
 export type Theme = 'light' | 'dark' | 'system';
 
@@ -46,7 +47,7 @@ export function useThemeProvider() {
 
   const setTheme = useCallback((newTheme: Theme) => {
     setThemeState(newTheme);
-    try { localStorage.setItem('theme', newTheme); } catch {}
+    try { setSettingItem('theme', newTheme); } catch {}
     const resolved = newTheme === 'system'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
       : newTheme;

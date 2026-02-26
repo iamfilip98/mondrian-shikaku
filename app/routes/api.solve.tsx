@@ -126,12 +126,15 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ ok: true, ...(streak !== null && { streak }) });
   } else {
     // Non-daily: just increment puzzles_completed
-    const { error: updateError } = await supabase.rpc('increment_puzzles_completed', {
-      p_user_id: userId,
-    }).catch(() => {
-      // Fallback to manual increment if RPC doesn't exist
-      return { error: { message: 'RPC not found' } as { message: string } };
-    });
+    let updateError: { message: string } | null = null;
+    try {
+      const { error } = await supabase.rpc('increment_puzzles_completed', {
+        p_user_id: userId,
+      });
+      updateError = error;
+    } catch {
+      updateError = { message: 'RPC not found' };
+    }
 
     if (updateError) {
       // Fallback: read-then-write

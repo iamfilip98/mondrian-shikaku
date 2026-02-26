@@ -78,6 +78,22 @@ export default function WinModal({
                 backgroundColor: 'var(--color-red)',
               }}
             />
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              style={{
+                position: 'absolute',
+                top: '14px',
+                right: '14px',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--color-text-muted)',
+                fontSize: 'var(--text-base)',
+              }}
+            >
+              ✕
+            </button>
 
             <div className="px-8 py-6">
               {/* Solve time */}

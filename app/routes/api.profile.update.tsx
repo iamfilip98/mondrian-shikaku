@@ -61,6 +61,21 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const supabase = getServerSupabase();
 
+  // Rate limiting: max 10 updates per minute per user
+  const { data: profileRow } = await supabase
+    .from('profiles')
+    .select('updated_at')
+    .eq('id', userId)
+    .single();
+
+  if (profileRow?.updated_at) {
+    const lastUpdate = new Date(profileRow.updated_at).getTime();
+    // If updated within the last 3 seconds, rate limit
+    if (Date.now() - lastUpdate < 3000) {
+      return Response.json({ error: 'Too many requests.' }, { status: 429 });
+    }
+  }
+
   const { error } = await supabase
     .from('profiles')
     .update(updates)

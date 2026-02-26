@@ -6,6 +6,7 @@ import { useTheme, type Theme } from '~/lib/hooks/useTheme';
 import { useSound } from '~/lib/hooks/useSound';
 import { useToast } from '~/lib/hooks/useToast';
 import { getUserStats } from '~/lib/supabase/queries';
+import { setSettingItem } from '~/lib/utils/settingStorage';
 
 export function meta() {
   return [
@@ -15,6 +16,11 @@ export function meta() {
       content: 'View your Shikaku stats, streaks, and best times.',
     },
     { property: 'og:title', content: 'Profile — Mondrian Shikaku' },
+    { property: 'og:image', content: 'https://mondrianshikaku.com/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:image', content: 'https://mondrianshikaku.com/og-image.png' },
   ];
 }
 
@@ -59,6 +65,9 @@ function Toggle({
 }) {
   return (
     <button
+      role="switch"
+      aria-checked={value}
+      aria-label={label}
       onClick={() => onChange(!value)}
       className="flex items-center justify-between w-full py-3 cursor-pointer"
       style={{
@@ -119,17 +128,17 @@ export default function Profile() {
 
   const handleBlindMode = useCallback((v: boolean) => {
     setBlindMode(v);
-    try { localStorage.setItem('blindMode', String(v)); } catch {}
+    try { setSettingItem('blindMode', String(v)); } catch {}
   }, []);
 
   const handleShowTimer = useCallback((v: boolean) => {
     setShowTimer(v);
-    try { localStorage.setItem('showTimer', String(v)); } catch {}
+    try { setSettingItem('showTimer', String(v)); } catch {}
   }, []);
 
   const handleShowDragCounter = useCallback((v: boolean) => {
     setShowDragCounter(v);
-    try { localStorage.setItem('showDragCounter', String(v)); } catch {}
+    try { setSettingItem('showDragCounter', String(v)); } catch {}
   }, []);
 
   useEffect(() => {

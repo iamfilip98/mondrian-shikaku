@@ -21,7 +21,7 @@ export function generatePuzzleAsync(
       // Timeout: fall back to synchronous generation
       try {
         resolve(generatePuzzle(config));
-      } catch (err) {
+      } catch {
         reject(new Error('Puzzle generation timed out and fallback failed'));
       }
     }, timeoutMs);
@@ -36,7 +36,7 @@ export function generatePuzzleAsync(
       }
     };
 
-    worker.onerror = (err) => {
+    worker.onerror = (_err) => {
       clearTimeout(timer);
       worker.terminate();
       // Worker failed to load: fall back to synchronous

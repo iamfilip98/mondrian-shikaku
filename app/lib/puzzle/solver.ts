@@ -63,19 +63,27 @@ function getCandidates(
   return candidates;
 }
 
-function placeRect(grid: number[][], rect: GridRect, index: number): void {
+interface GridChange {
+  r: number;
+  c: number;
+  oldVal: number;
+}
+
+function placeRect(grid: number[][], rect: GridRect, index: number): GridChange[] {
+  const changes: GridChange[] = [];
   for (let r = rect.row; r < rect.row + rect.height; r++) {
     for (let c = rect.col; c < rect.col + rect.width; c++) {
+      changes.push({ r, c, oldVal: grid[r][c] });
       grid[r][c] = index;
     }
   }
+  return changes;
 }
 
-function removeRect(grid: number[][], rect: GridRect): void {
-  for (let r = rect.row; r < rect.row + rect.height; r++) {
-    for (let c = rect.col; c < rect.col + rect.width; c++) {
-      grid[r][c] = -1;
-    }
+function restoreChanges(grid: number[][], changes: GridChange[]): void {
+  for (let i = changes.length - 1; i >= 0; i--) {
+    const ch = changes[i];
+    grid[ch.r][ch.c] = ch.oldVal;
   }
 }
 
@@ -107,7 +115,23 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
   const solutions: GridRect[][] = [];
   const maxSolutions = findAll ? 2 : 1;
 
-  function propagate(): boolean {
+  function backtrack(depth = 0): void {
+    nodeCount++;
+    if (depth > 500 || nodeCount > maxNodes) return;
+
+    // Save state for restore
+    const savedPlacedLen = state.placed.length;
+    const savedResolved = [...state.clueResolved];
+    const allChanges: GridChange[] = [];
+
+    // Propagate forced moves — track all grid changes
+    const origPropagatePlaceRect = (rect: GridRect, index: number) => {
+      const changes = placeRect(state.grid, rect, index);
+      allChanges.push(...changes);
+    };
+
+    // Inline propagation with change tracking
+    let ok = true;
     let progress = true;
     while (progress) {
       progress = false;
@@ -115,8 +139,6 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
         if (state.clueResolved[i]) continue;
 
         const candidates = getCandidates(clues[i], width, height, state.grid);
-
-        // Filter: no other unresolved clue inside the candidate rect
         const validCandidates = candidates.filter((rect) => {
           for (let j = 0; j < clues.length; j++) {
             if (j === i) continue;
@@ -126,41 +148,23 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
           return true;
         });
 
-        if (validCandidates.length === 0) return false; // Contradiction
+        if (validCandidates.length === 0) { ok = false; break; }
         if (validCandidates.length === 1) {
-          // Forced move
           const rect = validCandidates[0];
-          placeRect(state.grid, rect, state.placed.length);
+          origPropagatePlaceRect(rect, state.placed.length);
           state.placed.push(rect);
           state.clueResolved[i] = true;
           progress = true;
         }
       }
+      if (!ok) break;
     }
-    return true;
-  }
-
-  function backtrack(depth = 0): void {
-    nodeCount++;
-    if (depth > 500 || nodeCount > maxNodes) return;
-
-    // Save state for restore
-    const savedPlacedLen = state.placed.length;
-    const savedResolved = [...state.clueResolved];
-    const savedGrid = state.grid.map((row) => [...row]);
-
-    // Propagate forced moves
-    const ok = propagate();
 
     if (!ok) {
       // Restore state
       state.placed.length = savedPlacedLen;
       state.clueResolved = savedResolved;
-      for (let r = 0; r < height; r++) {
-        for (let c = 0; c < width; c++) {
-          state.grid[r][c] = savedGrid[r][c];
-        }
-      }
+      restoreChanges(state.grid, allChanges);
       state.backtracks++;
       return;
     }
@@ -171,11 +175,7 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
       // Restore for further search
       state.placed.length = savedPlacedLen;
       state.clueResolved = savedResolved;
-      for (let r = 0; r < height; r++) {
-        for (let c = 0; c < width; c++) {
-          state.grid[r][c] = savedGrid[r][c];
-        }
-      }
+      restoreChanges(state.grid, allChanges);
       return;
     }
 
@@ -201,11 +201,7 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
       // Restore
       state.placed.length = savedPlacedLen;
       state.clueResolved = savedResolved;
-      for (let r = 0; r < height; r++) {
-        for (let c = 0; c < width; c++) {
-          state.grid[r][c] = savedGrid[r][c];
-        }
-      }
+      restoreChanges(state.grid, allChanges);
       state.backtracks++;
       return;
     }
@@ -224,9 +220,8 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
       // Save state before trying
       const innerSavedLen = state.placed.length;
       const innerSavedResolved = [...state.clueResolved];
-      const innerSavedGrid = state.grid.map((row) => [...row]);
 
-      placeRect(state.grid, candidate, state.placed.length);
+      const innerChanges = placeRect(state.grid, candidate, state.placed.length);
       state.placed.push(candidate);
       state.clueResolved[bestIdx] = true;
 
@@ -235,11 +230,7 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
       // Restore after trying this candidate
       state.placed.length = innerSavedLen;
       state.clueResolved = innerSavedResolved;
-      for (let r = 0; r < height; r++) {
-        for (let c = 0; c < width; c++) {
-          state.grid[r][c] = innerSavedGrid[r][c];
-        }
-      }
+      restoreChanges(state.grid, innerChanges);
 
       if (!findAll && solutions.length >= 1) break;
     }
@@ -247,11 +238,7 @@ export function solve(puzzle: Puzzle, findAll = true, maxNodes = 50000): SolverR
     // Final restore for this level
     state.placed.length = savedPlacedLen;
     state.clueResolved = savedResolved;
-    for (let r = 0; r < height; r++) {
-      for (let c = 0; c < width; c++) {
-        state.grid[r][c] = savedGrid[r][c];
-      }
-    }
+    restoreChanges(state.grid, allChanges);
 
     if (candidates.length > 1) {
       state.backtracks++;

@@ -30,6 +30,10 @@ export default function ToastContainer() {
         {toasts.map((toast) => (
           <motion.div
             key={toast.id}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') removeToast(toast.id);
+            }}
             initial={{ opacity: 0, y: 20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}

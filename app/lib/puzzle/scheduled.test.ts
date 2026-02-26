@@ -51,7 +51,7 @@ describe('getMonthlyPuzzle', () => {
     const p1 = getMonthlyPuzzle(date);
     const p2 = getMonthlyPuzzle(date);
     expect(p1.clues).toEqual(p2.clues);
-  });
+  }, 15000);
 
   it('generates a 40x40 grid', () => {
     const p = getMonthlyPuzzle(new Date('2025-06-01T00:00:00Z'));

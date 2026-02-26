@@ -138,6 +138,34 @@ export function assignColors(
   return colorMap;
 }
 
+/**
+ * Assign a color to a single new rectangle based on its neighbors,
+ * without running full graph coloring on all rectangles.
+ */
+export function colorSingleRect(
+  newRect: GridRect,
+  existingRects: GridRect[],
+  existingColors: string[],
+  unlockedColors: string[]
+): string {
+  const neighborColors = new Set<string>();
+  const cornerColors = new Set<string>();
+
+  for (let i = 0; i < existingRects.length; i++) {
+    if (sharesEdge(newRect, existingRects[i])) {
+      neighborColors.add(existingColors[i]);
+    } else if (sharesCorner(newRect, existingRects[i])) {
+      cornerColors.add(existingColors[i]);
+    }
+  }
+
+  const validColors = unlockedColors.filter((c) => !neighborColors.has(c));
+  const preferred = validColors.filter((c) => !cornerColors.has(c));
+  const candidates = preferred.length > 0 ? preferred : validColors;
+
+  return candidates.length > 0 ? candidates[0] : unlockedColors[0];
+}
+
 export function getUnlockedColors(): string[] {
   return [...MONDRIAN_COLORS];
 }

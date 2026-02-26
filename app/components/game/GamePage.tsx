@@ -7,6 +7,7 @@ import { useSound } from '~/lib/hooks/useSound';
 import { useAuth } from '~/lib/hooks/useAuth';
 import { useToast } from '~/lib/hooks/useToast';
 import { trackEvent } from '~/lib/analytics';
+import { setSettingItem } from '~/lib/utils/settingStorage';
 import GameBoard from './GameBoard';
 import GameControls from './GameControls';
 import SettingsDrawer from './SettingsDrawer';
@@ -40,7 +41,7 @@ export default function GamePage({
 
   const gameState = useGameState(puzzle, blindMode);
   const sound = useSound();
-  const { user, profile, refreshProfile, getToken } = useAuth();
+  const { user, refreshProfile, getToken } = useAuth();
   const { addToast } = useToast();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [introComplete, setIntroComplete] = useState(() => {
@@ -221,6 +222,16 @@ export default function GamePage({
     return () => {
       document.removeEventListener('pointerup', cleanupPointer);
       document.removeEventListener('pointercancel', handlePointerCancel);
+      // Clear refs on unmount
+      pointerStartRef.current = null;
+      isDraggingRef.current = false;
+      dragCellRef.current = null;
+      pendingRemovalRef.current = null;
+      activePointersRef.current.clear();
+      isPinchingRef.current = false;
+      pinchCooldownRef.current = false;
+      isPanningRef.current = false;
+      panCooldownRef.current = false;
     };
   }, [cancelInteraction]);
 
@@ -397,8 +408,10 @@ export default function GamePage({
         elapsed_time: gameState.elapsedSeconds,
         difficulty,
       });
+    } else if (gameState.hintsRemaining > 0) {
+      addToast('Remove conflicting rectangles first', 'info');
     }
-  }, [gameState, sound, difficulty]);
+  }, [gameState, sound, difficulty, addToast]);
 
   const handleShare = useCallback(async () => {
     const text = `MONDRIAN SHIKAKU · ${puzzleType} · ${difficulty} · ${Math.floor(gameState.elapsedSeconds / 60)}:${String(gameState.elapsedSeconds % 60).padStart(2, '0')}`;
@@ -517,7 +530,7 @@ export default function GamePage({
         blindMode={blindMode}
         onBlindModeChange={(v) => {
           setBlindMode(v);
-          try { localStorage.setItem('blindMode', String(v)); } catch {}
+          try { setSettingItem('blindMode', String(v)); } catch {}
         }}
         soundEnabled={sound.enabled}
         onSoundChange={sound.toggleSound}
@@ -526,7 +539,7 @@ export default function GamePage({
         showDragCounter={showDragCounter}
         onShowDragCounterChange={(v) => {
           setShowDragCounter(v);
-          try { localStorage.setItem('showDragCounter', String(v)); } catch {}
+          try { setSettingItem('showDragCounter', String(v)); } catch {}
         }}
       />
 

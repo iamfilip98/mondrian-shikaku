@@ -37,7 +37,7 @@ export default function HallOfFame() {
         if (!grouped.has(key)) {
           grouped.set(key, { monthYear: key, entries: [] });
         }
-        const profileData = row.profiles as any;
+        const profileData = row.profiles as Record<string, string | undefined>;
         grouped.get(key)!.entries.push({
           rank: row.rank,
           username: profileData?.username ?? 'Unknown',

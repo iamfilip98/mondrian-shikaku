@@ -61,7 +61,7 @@ export default function Button({
       }}
       onHoverStart={() => {}}
       disabled={disabled}
-      {...(props as any)}
+      {...(props as React.ComponentProps<typeof motion.button>)}
     >
       {children}
     </motion.button>
@@ -89,7 +89,7 @@ export function IconButton({
       whileHover={disabled ? undefined : { y: -1 }}
       whileTap={disabled ? undefined : { y: 1 }}
       disabled={disabled}
-      {...(props as any)}
+      {...(props as React.ComponentProps<typeof motion.button>)}
     >
       {children}
     </motion.button>
