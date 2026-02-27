@@ -2,7 +2,8 @@ import { Resend } from 'resend';
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-const FROM_EMAIL = 'Mondrian Shikaku <noreply@mondrianshikaku.com>';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'Mondrian Shikaku <onboarding@resend.dev>';
+const SITE_URL = process.env.SITE_URL || 'https://mondrian-shikaku.vercel.app';
 
 export async function sendDailyReminder(to: string, username: string, streak: number) {
   if (!resend) {
@@ -28,7 +29,7 @@ export async function sendDailyReminder(to: string, username: string, streak: nu
               streak > 0 ? `Don't break your ${streak}-day streak!` : 'Start building your streak today.'
             }
           </p>
-          <a href="https://mondrianshikaku.com/daily"
+          <a href="${SITE_URL}/daily"
              style="display: inline-block; padding: 12px 24px; background: #0A0A0A; color: #F5F5F0;
                     font-size: 14px; font-weight: 500; text-decoration: none; border: none;">
             Play Today's Puzzle
@@ -36,7 +37,7 @@ export async function sendDailyReminder(to: string, username: string, streak: nu
         </div>
         <p style="font-size: 11px; color: #999; margin-top: 16px; text-align: center;">
           You're receiving this because you opted in on your profile.
-          <a href="https://mondrianshikaku.com/profile" style="color: #1356A2;">Manage preferences</a>
+          <a href="${SITE_URL}/profile" style="color: #1356A2;">Manage preferences</a>
         </p>
       </div>
     `,
@@ -64,14 +65,14 @@ export async function sendStreakRiskReminder(to: string, username: string, strea
             Hi ${username}, you haven't played today's daily puzzle yet. Your ${streak}-day streak
             will reset at midnight UTC if you don't play.
           </p>
-          <a href="https://mondrianshikaku.com/daily"
+          <a href="${SITE_URL}/daily"
              style="display: inline-block; padding: 12px 24px; background: #D40920; color: #F5F5F0;
                     font-size: 14px; font-weight: 500; text-decoration: none; border: none;">
             Save Your Streak
           </a>
         </div>
         <p style="font-size: 11px; color: #999; margin-top: 16px; text-align: center;">
-          <a href="https://mondrianshikaku.com/profile" style="color: #1356A2;">Manage preferences</a>
+          <a href="${SITE_URL}/profile" style="color: #1356A2;">Manage preferences</a>
         </p>
       </div>
     `,
