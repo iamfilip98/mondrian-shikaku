@@ -1,4 +1,6 @@
--- Achievement badges system
+-- Achievement badges system (replaces old achievements table with new schema)
+DROP TABLE IF EXISTS achievements CASCADE;
+
 CREATE TABLE achievements (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id    text REFERENCES profiles(id) NOT NULL,
