@@ -5,7 +5,8 @@ import { useAuth } from '~/lib/hooks/useAuth';
 import { useTheme, type Theme } from '~/lib/hooks/useTheme';
 import { useSound } from '~/lib/hooks/useSound';
 import { useToast } from '~/lib/hooks/useToast';
-import { getUserStats } from '~/lib/supabase/queries';
+import { getUserStats, getUserAchievements, type AchievementRow } from '~/lib/supabase/queries';
+import { BADGE_MAP } from '~/lib/achievements/badges';
 import { setSettingItem } from '~/lib/utils/settingStorage';
 
 export function meta() {
@@ -52,6 +53,40 @@ function formatDate(iso: string): string {
     month: 'long',
     year: 'numeric',
   });
+}
+
+function StatCard({ label, value, accent }: { label: string; value: number; accent?: string }) {
+  return (
+    <div
+      className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4"
+      style={accent ? { borderLeftWidth: '6px', borderLeftColor: accent } : undefined}
+    >
+      <h3
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontWeight: 400,
+          fontSize: 'var(--text-xs)',
+          color: 'var(--color-text-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          marginBottom: '4px',
+        }}
+      >
+        {label}
+      </h3>
+      <div
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontWeight: 600,
+          fontSize: 'var(--text-2xl)',
+          color: 'var(--color-text)',
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {value}
+      </div>
+    </div>
+  );
 }
 
 function Toggle({
@@ -116,6 +151,7 @@ export default function Profile() {
   const { theme, setTheme } = useTheme();
   const sound = useSound();
   const [stats, setStats] = useState<DifficultyStats[]>([]);
+  const [achievements, setAchievements] = useState<AchievementRow[]>([]);
   const [statsLoading, setStatsLoading] = useState(true);
   const [savingColor, setSavingColor] = useState(false);
   const [blindMode, setBlindMode] = useState(false);
@@ -157,12 +193,15 @@ export default function Profile() {
     let cancelled = false;
     setStatsLoading(true);
 
-    getUserStats(user.id).then((data) => {
-      if (!cancelled) {
-        setStats(data);
-        setStatsLoading(false);
+    Promise.all([getUserStats(user.id), getUserAchievements(user.id)]).then(
+      ([statsData, achievementsData]) => {
+        if (!cancelled) {
+          setStats(statsData);
+          setAchievements(achievementsData);
+          setStatsLoading(false);
+        }
       }
-    });
+    );
 
     return () => { cancelled = true; };
   }, [user]);
@@ -267,6 +306,19 @@ export default function Profile() {
   return (
     <div className="max-w-[800px] mx-auto px-6 py-12">
       {/* Header */}
+      <div className="flex items-center justify-between mb-2">
+        <div />
+        <Link
+          to="/stats"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--color-blue)',
+          }}
+        >
+          View Detailed Stats →
+        </Link>
+      </div>
       <div className="flex items-center gap-4 mb-10">
         <div
           style={{
@@ -303,95 +355,16 @@ export default function Profile() {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
-        <div
-          className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4"
-        >
-          <h3
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 400,
-              fontSize: 'var(--text-xs)',
-              color: 'var(--color-text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '4px',
-            }}
-          >
-            Puzzles Completed
-          </h3>
-          <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 600,
-              fontSize: 'var(--text-2xl)',
-              color: 'var(--color-text)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {profile.puzzles_completed}
-          </div>
-        </div>
-
-        <div
-          className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4"
-          style={{ borderLeftWidth: '6px', borderLeftColor: 'var(--color-yellow)' }}
-        >
-          <h3
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 400,
-              fontSize: 'var(--text-xs)',
-              color: 'var(--color-text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '4px',
-            }}
-          >
-            Current Streak
-          </h3>
-          <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 600,
-              fontSize: 'var(--text-2xl)',
-              color: 'var(--color-text)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {profile.daily_streak}
-          </div>
-        </div>
-
-        <div
-          className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4"
-          style={{ borderLeftWidth: '6px', borderLeftColor: 'var(--color-yellow)' }}
-        >
-          <h3
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 400,
-              fontSize: 'var(--text-xs)',
-              color: 'var(--color-text-muted)',
-              textTransform: 'uppercase',
-              letterSpacing: '0.05em',
-              marginBottom: '4px',
-            }}
-          >
-            Longest Streak
-          </h3>
-          <div
-            style={{
-              fontFamily: 'var(--font-body)',
-              fontWeight: 600,
-              fontSize: 'var(--text-2xl)',
-              color: 'var(--color-text)',
-              fontVariantNumeric: 'tabular-nums',
-            }}
-          >
-            {profile.longest_streak}
-          </div>
-        </div>
+      <div className="grid grid-cols-3 gap-4 mb-4">
+        <StatCard label="Puzzles Completed" value={profile.puzzles_completed} />
+        <StatCard label="Daily Streak" value={profile.daily_streak} accent="var(--color-yellow)" />
+        <StatCard label="Longest Daily" value={profile.longest_streak} accent="var(--color-yellow)" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <StatCard label="Weekly Streak" value={profile.weekly_streak ?? 0} accent="var(--color-blue)" />
+        <StatCard label="Best Weekly" value={profile.longest_weekly_streak ?? 0} accent="var(--color-blue)" />
+        <StatCard label="Monthly Streak" value={profile.monthly_streak ?? 0} accent="var(--color-red)" />
+        <StatCard label="Best Monthly" value={profile.longest_monthly_streak ?? 0} accent="var(--color-red)" />
       </div>
 
       {/* Best Times table */}
@@ -484,6 +457,66 @@ export default function Profile() {
               </span>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Achievements */}
+      <h2
+        className="mb-4"
+        style={{
+          fontFamily: 'var(--font-display)',
+          fontSize: 'var(--text-2xl)',
+          color: 'var(--color-text)',
+        }}
+      >
+        Achievements
+      </h2>
+      {achievements.length === 0 ? (
+        <div
+          className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-6 mb-10"
+          style={{
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            color: 'var(--color-text-muted)',
+          }}
+        >
+          No achievements yet. Keep solving puzzles to earn badges!
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-10">
+          {achievements.map((a) => {
+            const badge = BADGE_MAP.get(a.badge_key);
+            if (!badge) return null;
+            return (
+              <div
+                key={a.badge_key}
+                className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+                style={{ borderLeftWidth: '6px', borderLeftColor: badge.color }}
+              >
+                <span
+                  className="block"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontWeight: 500,
+                    fontSize: 'var(--text-sm)',
+                    color: 'var(--color-text)',
+                  }}
+                >
+                  {badge.name}
+                </span>
+                <span
+                  className="block mt-1"
+                  style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--color-text-muted)',
+                  }}
+                >
+                  {badge.description}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -606,6 +639,57 @@ export default function Profile() {
             value={showDragCounter}
             onChange={handleShowDragCounter}
             label="Show drag counter"
+          />
+        </div>
+
+        {/* Notifications */}
+        <div className="border-t border-[var(--color-border-muted)] pt-2">
+          <span
+            className="block mb-1 mt-2"
+            style={{
+              fontFamily: 'var(--font-body)',
+              fontSize: 'var(--text-xs)',
+              fontWeight: 500,
+              color: 'var(--color-text-muted)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.05em',
+            }}
+          >
+            Email Notifications
+          </span>
+          <Toggle
+            value={profile.notify_daily ?? false}
+            onChange={async (v) => {
+              try {
+                const token = await getToken();
+                if (!token) return;
+                await fetch('/api/profile/update', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ notify_daily: v }),
+                });
+                await refreshProfile();
+                addToast(v ? 'Daily reminders enabled' : 'Daily reminders disabled', 'success');
+              } catch { addToast('Failed to update', 'error'); }
+            }}
+            label="Daily puzzle reminder"
+          />
+          <Toggle
+            value={profile.notify_streak_risk ?? false}
+            onChange={async (v) => {
+              try {
+                const token = await getToken();
+                if (!token) return;
+                await fetch('/api/profile/update', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ notify_streak_risk: v }),
+                });
+                await refreshProfile();
+                addToast(v ? 'Streak risk alerts enabled' : 'Streak risk alerts disabled', 'success');
+              } catch { addToast('Failed to update', 'error'); }
+            }}
+            label="Streak at risk alert"
           />
         </div>
       </div>

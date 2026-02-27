@@ -174,7 +174,53 @@ As you advance, you will develop intuition for:
 
 The beauty of Shikaku is that all of this emerges from a single rule. No memorization. No formulas. Just spatial logic applied to a grid of rectangles.
 
-Start with small grids. The Primer difficulty (4×4 to 5×5) is designed to be immediately approachable. Each puzzle teaches through doing, not through explanation. Once the rule clicks — and it will, within your first completed puzzle — everything else follows from logic.
+## Playing on Mondrian Shikaku
+
+Mondrian Shikaku offers two ways to play:
+
+**Scheduled Puzzles** — A fresh Daily (10×10), Weekly (20×20), and Monthly (40×40) puzzle is available at fixed intervals. Everyone worldwide receives the same puzzle, and a leaderboard tracks the fastest solvers. Your daily streak is maintained by completing the daily puzzle on consecutive days.
+
+**Free Play** — Choose from five difficulty tiers (Easy through Nightmare) and play as many puzzles as you want. Each puzzle is randomly generated with a unique seed.
+
+### Controls
+
+You can place rectangles in two ways:
+
+- **Drag**: Click or tap a cell, then drag to the opposite corner of the rectangle you want to place. Release to confirm.
+- **Tap**: Tap a starting cell, then tap the ending cell. The rectangle fills the area between the two taps.
+
+On mobile, pinch to zoom on larger grids and pan to navigate.
+
+### Tools
+
+- **Undo / Redo**: Reverse or reapply your last move. Keyboard shortcuts: Ctrl+Z (undo), Ctrl+Y or Cmd+Shift+Z (redo).
+- **Hint**: Reveals the correct placement for one rectangle. You have up to 3 hints per puzzle. Keyboard shortcut: H.
+- **Clear**: Removes all placed rectangles and resets the board. Keyboard shortcut: R (press twice to confirm).
+- **Settings**: Access via the gear icon or Escape key. Toggle sound effects, timer visibility, and other preferences.
+
+### Blind Mode
+
+When enabled, all placed rectangles are coloured regardless of correctness — you will not see visual feedback about whether a rectangle is right or wrong until the entire puzzle is solved. This adds a significant challenge for experienced solvers.
+
+### Save & Resume
+
+Your progress is automatically saved. If you leave a puzzle and return later, your placed rectangles will be restored exactly as you left them.
+
+### Keyboard Shortcuts
+
+For desktop players, full keyboard control is available:
+
+- **Ctrl+Z** — Undo
+- **Ctrl+Y / Cmd+Shift+Z** — Redo
+- **H** — Use a hint
+- **R** — Clear board (press twice)
+- **Escape** — Open settings
+
+## From Beginner to Expert
+
+Start with small grids. The Easy difficulty (6×7) is designed to be immediately approachable. Each puzzle teaches through doing, not through explanation. Once the rule clicks — and it will, within your first completed puzzle — everything else follows from logic.
+
+As you advance through Medium, Hard, Expert, and Nightmare difficulties, grids grow larger and require deeper chains of logical reasoning. The fundamentals never change — the single rule remains — but mastery reveals layers of strategy that reward patience and attention.
     `,
   },
   'mondrian-and-logic': {

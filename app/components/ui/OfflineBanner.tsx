@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { syncPendingSolves } from '~/lib/utils/offlineQueue';
 
 export default function OfflineBanner() {
   const [isOffline, setIsOffline] = useState(false);
@@ -7,7 +8,11 @@ export default function OfflineBanner() {
     if (typeof window === 'undefined') return;
 
     const goOffline = () => setIsOffline(true);
-    const goOnline = () => setIsOffline(false);
+    const goOnline = () => {
+      setIsOffline(false);
+      // Sync any queued solves when coming back online
+      syncPendingSolves().catch(() => {});
+    };
 
     // Check initial state
     if (!navigator.onLine) setIsOffline(true);
@@ -42,7 +47,7 @@ export default function OfflineBanner() {
         textAlign: 'center',
       }}
     >
-      You're offline — solves won't be saved
+      You're offline — solves will be queued and synced when you reconnect
     </div>
   );
 }

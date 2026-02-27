@@ -9,6 +9,9 @@ const ALLOWED_FIELDS = new Set([
   'blind_mode',
   'sound_enabled',
   'show_timer',
+  'notify_daily',
+  'notify_streak_risk',
+  'email',
 ]);
 
 const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,30}$/;
@@ -47,6 +50,17 @@ export async function action({ request }: ActionFunctionArgs) {
         break;
       case 'avatar_color':
         if (typeof value !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(value)) {
+          return Response.json({ error: 'Invalid request.' }, { status: 400 });
+        }
+        break;
+      case 'notify_daily':
+      case 'notify_streak_risk':
+        if (typeof value !== 'boolean') {
+          return Response.json({ error: 'Invalid request.' }, { status: 400 });
+        }
+        break;
+      case 'email':
+        if (typeof value !== 'string' || (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) {
           return Response.json({ error: 'Invalid request.' }, { status: 400 });
         }
         break;

@@ -3,6 +3,7 @@ import { Link } from 'react-router';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
 import { useFocusTrap } from '~/lib/hooks/useFocusTrap';
+import { BADGE_MAP } from '~/lib/achievements/badges';
 import type { Difficulty } from '~/lib/puzzle/types';
 
 interface WinModalProps {
@@ -14,6 +15,7 @@ interface WinModalProps {
   puzzleType: string;
   isLoggedIn?: boolean;
   streak?: number | null;
+  newBadges?: string[];
   onNextPuzzle: () => void;
   onShare: () => void;
   onClose: () => void;
@@ -34,6 +36,7 @@ export default function WinModal({
   puzzleType,
   isLoggedIn,
   streak,
+  newBadges,
   onNextPuzzle,
   onShare,
   onClose,
@@ -185,6 +188,45 @@ export default function WinModal({
                   </span>
                 )}
               </div>
+
+              {/* New badges */}
+              {newBadges && newBadges.length > 0 && (
+                <div className="mb-4 border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-3">
+                  <span
+                    className="block mb-2 text-center"
+                    style={{
+                      fontFamily: 'var(--font-body)',
+                      fontWeight: 500,
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--color-text-muted)',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                    }}
+                  >
+                    New Achievement{newBadges.length > 1 ? 's' : ''}!
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    {newBadges.map(key => {
+                      const badge = BADGE_MAP.get(key);
+                      if (!badge) return null;
+                      return (
+                        <div
+                          key={key}
+                          className="flex items-center gap-2 px-2 py-1"
+                          style={{ borderLeft: `4px solid ${badge.color}` }}
+                        >
+                          <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--color-text)' }}>
+                            {badge.name}
+                          </span>
+                          <span style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+                            — {badge.description}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Actions */}
               <div className="flex flex-col gap-3">

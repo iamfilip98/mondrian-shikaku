@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from 'react-router';
 import { getAuthUserId } from '~/lib/auth/verify.server';
 import { getServerSupabase } from '~/lib/supabase/server';
 import { validateSolve } from '~/lib/puzzle/validate.server';
+import { checkNewBadges, type AchievementCheckContext } from '~/lib/achievements/badges';
 
 const VALID_PUZZLE_TYPES = ['daily', 'weekly', 'monthly', 'free'] as const;
 const VALID_DIFFICULTIES = ['primer', 'easy', 'medium', 'hard', 'expert', 'nightmare'] as const;
@@ -134,8 +135,9 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   // Update streak / puzzles_completed
+  const responseData: Record<string, unknown> = { ok: true };
+
   if (puzzleType === 'daily') {
-    // Use atomic RPC to prevent streak race conditions
     const today = new Date().toISOString().slice(0, 10);
     const { data: streakResult, error: streakError } = await supabase
       .rpc('update_daily_streak', { p_user_id: userId, p_today: today });
@@ -145,39 +147,100 @@ export async function action({ request }: ActionFunctionArgs) {
     }
 
     const streak = streakResult?.[0]?.new_streak ?? null;
-    return Response.json({ ok: true, ...(streak !== null && { streak }) });
+    if (streak !== null) responseData.streak = streak;
+  } else if (puzzleType === 'weekly') {
+    const now = new Date();
+    const day = now.getUTCDay();
+    const mondayOffset = day === 0 ? -6 : 1 - day;
+    const weekStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + mondayOffset));
+    const weekStartStr = weekStart.toISOString().slice(0, 10);
+
+    const { data: streakResult, error: streakError } = await supabase
+      .rpc('update_weekly_streak', { p_user_id: userId, p_week_start: weekStartStr });
+
+    if (streakError) console.error('[api.solve] Weekly streak RPC error:', streakError.message);
+
+    await incrementPuzzlesCompleted(supabase, userId);
+
+    const streak = streakResult?.[0]?.new_streak ?? null;
+    if (streak !== null) responseData.weeklyStreak = streak;
+  } else if (puzzleType === 'monthly') {
+    const now = new Date();
+    const monthStart = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-01`;
+
+    const { data: streakResult, error: streakError } = await supabase
+      .rpc('update_monthly_streak', { p_user_id: userId, p_month_start: monthStart });
+
+    if (streakError) console.error('[api.solve] Monthly streak RPC error:', streakError.message);
+
+    await incrementPuzzlesCompleted(supabase, userId);
+
+    const streak = streakResult?.[0]?.new_streak ?? null;
+    if (streak !== null) responseData.monthlyStreak = streak;
   } else {
-    // Non-daily: just increment puzzles_completed
-    let updateError: { message: string } | null = null;
-    try {
-      const { error } = await supabase.rpc('increment_puzzles_completed', {
-        p_user_id: userId,
-      });
-      updateError = error;
-    } catch {
-      updateError = { message: 'RPC not found' };
+    await incrementPuzzlesCompleted(supabase, userId);
+  }
+
+  // Check achievements
+  try {
+    const [profileData, existingAchievements, noHintData] = await Promise.all([
+      supabase.from('profiles').select('puzzles_completed, longest_streak').eq('id', userId).single(),
+      supabase.from('achievements').select('badge_key').eq('user_id', userId),
+      supabase.from('solves').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('hints_used', 0),
+    ]);
+
+    const earnedBadges = new Set((existingAchievements.data || []).map(a => a.badge_key));
+    const ctx: AchievementCheckContext = {
+      puzzlesCompleted: profileData.data?.puzzles_completed ?? 0,
+      longestStreak: profileData.data?.longest_streak ?? 0,
+      difficulty,
+      hintsUsed: hintsUsed ?? 0,
+      solveTimeSeconds,
+      noHintSolves: noHintData.count ?? 0,
+      earnedBadges,
+    };
+
+    const newBadges = checkNewBadges(ctx);
+    if (newBadges.length > 0) {
+      await supabase.from('achievements').insert(
+        newBadges.map(key => ({ user_id: userId, badge_key: key }))
+      );
+      responseData.newBadges = newBadges;
     }
+  } catch (err) {
+    console.error('[api.solve] Achievement check error:', err);
+  }
 
-    if (updateError) {
-      // Fallback: read-then-write
-      const { data: profile } = await supabase
+  return Response.json(responseData);
+}
+
+async function incrementPuzzlesCompleted(supabase: ReturnType<typeof getServerSupabase>, userId: string) {
+  let updateError: { message: string } | null = null;
+  try {
+    const { error } = await supabase.rpc('increment_puzzles_completed', {
+      p_user_id: userId,
+    });
+    updateError = error;
+  } catch {
+    updateError = { message: 'RPC not found' };
+  }
+
+  if (updateError) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('puzzles_completed')
+      .eq('id', userId)
+      .single();
+
+    if (profile) {
+      const { error: fallbackError } = await supabase
         .from('profiles')
-        .select('puzzles_completed')
-        .eq('id', userId)
-        .single();
+        .update({ puzzles_completed: (profile.puzzles_completed || 0) + 1 })
+        .eq('id', userId);
 
-      if (profile) {
-        const { error: fallbackError } = await supabase
-          .from('profiles')
-          .update({ puzzles_completed: (profile.puzzles_completed || 0) + 1 })
-          .eq('id', userId);
-
-        if (fallbackError) {
-          console.error('[api.solve] Puzzles completed update error:', fallbackError.message);
-        }
+      if (fallbackError) {
+        console.error('[api.solve] Puzzles completed update error:', fallbackError.message);
       }
     }
   }
-
-  return Response.json({ ok: true });
 }

@@ -15,6 +15,15 @@ export interface Profile {
   daily_streak: number;
   longest_streak: number;
   last_daily_date: string | null;
+  weekly_streak: number;
+  longest_weekly_streak: number;
+  last_weekly_date: string | null;
+  monthly_streak: number;
+  longest_monthly_streak: number;
+  last_monthly_date: string | null;
+  email: string | null;
+  notify_daily: boolean;
+  notify_streak_risk: boolean;
   created_at: string;
 }
 

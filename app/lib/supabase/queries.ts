@@ -150,6 +150,54 @@ export async function getUserSolveForSeed(userId: string, seed: string): Promise
   return data || null;
 }
 
+export interface AchievementRow {
+  badge_key: string;
+  earned_at: string;
+}
+
+export async function getUserAchievements(userId: string): Promise<AchievementRow[]> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('achievements')
+    .select('badge_key, earned_at')
+    .eq('user_id', userId)
+    .order('earned_at', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching achievements:', error);
+    return [];
+  }
+  return data || [];
+}
+
+export interface SolveHistoryRow {
+  difficulty: string;
+  solve_time_seconds: number;
+  hints_used: number;
+  puzzle_type: string;
+  completed_at: string;
+}
+
+export async function getUserSolveHistory(userId: string, limit = 200): Promise<SolveHistoryRow[]> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return [];
+
+  const { data, error } = await supabase
+    .from('solves')
+    .select('difficulty, solve_time_seconds, hints_used, puzzle_type, completed_at')
+    .eq('user_id', userId)
+    .order('completed_at', { ascending: true })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching solve history:', error);
+    return [];
+  }
+  return data || [];
+}
+
 export async function getProfile(userId: string) {
   const supabase = getSupabaseClient();
   if (!supabase) return null;

@@ -83,3 +83,52 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Background Sync for offline solve queue
+self.addEventListener('sync', (event) => {
+  if (event.tag === 'sync-solves') {
+    event.waitUntil(syncOfflineSolves());
+  }
+});
+
+async function syncOfflineSolves() {
+  const DB_NAME = 'shikaku_offline';
+  const STORE_NAME = 'pending_solves';
+
+  try {
+    const db = await new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    const solves = await new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const request = tx.objectStore(STORE_NAME).getAll();
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    for (const solve of solves) {
+      try {
+        const res = await fetch('/api/solve', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + solve.token,
+          },
+          body: JSON.stringify(solve.payload),
+        });
+
+        if (res.ok || (res.status >= 400 && res.status < 500)) {
+          const deleteTx = db.transaction(STORE_NAME, 'readwrite');
+          deleteTx.objectStore(STORE_NAME).delete(solve.id);
+        }
+      } catch {
+        break; // Still offline
+      }
+    }
+  } catch {
+    // DB not available
+  }
+}

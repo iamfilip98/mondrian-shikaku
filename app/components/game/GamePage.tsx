@@ -10,6 +10,7 @@ import { trackEvent } from '~/lib/analytics';
 import { setSettingItem } from '~/lib/utils/settingStorage';
 import { useKeyboardControls } from '~/lib/hooks/useKeyboardControls';
 import { generateEmojiGrid } from '~/lib/utils/emojiGrid';
+import { queueSolve } from '~/lib/utils/offlineQueue';
 import GameBoard from './GameBoard';
 import GameControls from './GameControls';
 import SettingsDrawer from './SettingsDrawer';
@@ -94,8 +95,9 @@ export default function GamePage({
     });
   }, []);
 
-  // Streak state for WinModal
+  // Streak and badges state for WinModal
   const [winStreak, setWinStreak] = useState<number | null>(null);
+  const [newBadges, setNewBadges] = useState<string[]>([]);
 
   // Calculate cell size
   const cellSize = useMemo(() => {
@@ -195,6 +197,9 @@ export default function GamePage({
             if (puzzleTypeKey === 'daily' && data.streak) {
               setWinStreak(data.streak);
             }
+            if (data.newBadges && data.newBadges.length > 0) {
+              setNewBadges(data.newBadges);
+            }
             addToast('Solve saved!', 'success');
             await refreshProfile();
             return;
@@ -206,6 +211,16 @@ export default function GamePage({
           if (res.status >= 400 && res.status < 500) break;
         } catch {
           lastError = 'Network error';
+        }
+      }
+      // Queue for offline sync if network error
+      if (lastError === 'Network error') {
+        try {
+          await queueSolve(payload, token);
+          addToast('Solve queued for sync when online', 'info');
+          return;
+        } catch {
+          // Fall through to error
         }
       }
       addToast(`Could not save solve: ${lastError}`, 'error');
@@ -618,6 +633,7 @@ export default function GamePage({
         puzzleType={puzzleType}
         isLoggedIn={!!user}
         streak={puzzleType === 'Daily' ? winStreak : undefined}
+        newBadges={newBadges}
         onNextPuzzle={onNextPuzzle || (() => window.location.reload())}
         onShare={handleShare}
         onClose={() => setShowWinModal(false)}
