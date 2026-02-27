@@ -70,8 +70,8 @@ export async function action({ request }: ActionFunctionArgs) {
 
   if (profileRow?.updated_at) {
     const lastUpdate = new Date(profileRow.updated_at).getTime();
-    // If updated within the last 3 seconds, rate limit
-    if (Date.now() - lastUpdate < 3000) {
+    // If updated within the last 30 seconds, rate limit
+    if (Date.now() - lastUpdate < 30_000) {
       return Response.json({ error: 'Too many requests.' }, { status: 429 });
     }
   }

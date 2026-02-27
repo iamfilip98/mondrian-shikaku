@@ -1,5 +1,5 @@
 import { useRef, useCallback, useMemo, memo } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import type { Puzzle } from '~/lib/puzzle/types';
 import type { PlacedRect } from '~/lib/hooks/useGameState';
 import type { GridRect } from '~/lib/puzzle/types';
@@ -31,6 +31,7 @@ export default memo(function GameBoard({
   cellSize,
   showDragCounter,
 }: GameBoardProps) {
+  const reducedMotion = useReducedMotion();
   const svgRef = useRef<SVGSVGElement>(null);
   const svgWidth = cellSize * puzzle.width;
   const svgHeight = cellSize * puzzle.height;
@@ -110,8 +111,8 @@ export default memo(function GameBoard({
         fill="var(--color-grid-bg)"
       />
 
-      {/* Ambient breathing for unplaced cells — skip on large grids for performance */}
-      {!isComplete &&
+      {/* Ambient breathing for unplaced cells — skip on large grids/reduced motion */}
+      {!isComplete && !reducedMotion &&
         puzzle.width * puzzle.height <= 225 &&
         Array.from({ length: puzzle.height }, (_, r) =>
           Array.from({ length: puzzle.width }, (_, c) => {
@@ -191,10 +192,10 @@ export default memo(function GameBoard({
               fill={rect.color}
               stroke="var(--color-border)"
               strokeWidth={stroke.rect}
-              initial={{ opacity: 0 }}
+              initial={{ opacity: reducedMotion ? 1 : 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.1 }}
+              transition={{ duration: reducedMotion ? 0 : 0.1 }}
               style={{ cursor: 'pointer' }}
               onClick={(e) => {
                 e.stopPropagation();
@@ -288,22 +289,34 @@ export default memo(function GameBoard({
 
       {/* Layer 7: Start cell highlight (tap mode) */}
       {startCell && (
-        <motion.rect
-          x={startCell.col * cellSize + stroke.preview / 2}
-          y={startCell.row * cellSize + stroke.preview / 2}
-          width={cellSize - stroke.preview}
-          height={cellSize - stroke.preview}
-          fill="var(--color-select)"
-          pointerEvents="none"
-          animate={{
-            opacity: [0, 0.35, 0, 0.35, 0, 0.35, 0],
-          }}
-          transition={{
-            duration: 0.9,
-            repeat: Infinity,
-            repeatDelay: 0.3,
-          }}
-        />
+        reducedMotion ? (
+          <rect
+            x={startCell.col * cellSize + stroke.preview / 2}
+            y={startCell.row * cellSize + stroke.preview / 2}
+            width={cellSize - stroke.preview}
+            height={cellSize - stroke.preview}
+            fill="var(--color-select)"
+            opacity={0.35}
+            pointerEvents="none"
+          />
+        ) : (
+          <motion.rect
+            x={startCell.col * cellSize + stroke.preview / 2}
+            y={startCell.row * cellSize + stroke.preview / 2}
+            width={cellSize - stroke.preview}
+            height={cellSize - stroke.preview}
+            fill="var(--color-select)"
+            pointerEvents="none"
+            animate={{
+              opacity: [0, 0.35, 0, 0.35, 0, 0.35, 0],
+            }}
+            transition={{
+              duration: 0.9,
+              repeat: Infinity,
+              repeatDelay: 0.3,
+            }}
+          />
+        )
       )}
     </svg>
   );

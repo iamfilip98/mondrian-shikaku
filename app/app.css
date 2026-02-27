@@ -64,7 +64,7 @@
   --color-border:       #0A0A0A;
   --color-border-muted: #CCCCCC;
   --color-text:         #0A0A0A;
-  --color-text-muted:   #555555;
+  --color-text-muted:   #444444;
   --color-text-inverse: #F5F5F0;
   --color-grid-bg:      #F5F5F0;
   --color-grid-line:    #CCCCCC;
@@ -80,7 +80,7 @@
   --color-border:       #E8E8E0;
   --color-border-muted: #444444;
   --color-text:         #E8E8E0;
-  --color-text-muted:   #999999;
+  --color-text-muted:   #A0A0A0;
   --color-text-inverse: #0D0D0D;
   --color-grid-bg:      #0D0D0D;
   --color-grid-line:    #3A3A3A;
@@ -107,6 +107,7 @@ body {
   background-color: var(--color-bg);
   margin: 0;
   padding: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 /* ── Typography ── */
@@ -153,6 +154,16 @@ h1, h2, h3, h4, h5, h6 {
 /* ── Tabular numbers for timers/counters ── */
 .tabular-nums {
   font-variant-numeric: tabular-nums;
+}
+
+/* ── Skeleton loading animation ── */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
 
 /* ── Ambient grid breathing animation ── */
@@ -202,6 +213,19 @@ h1, h2, h3, h4, h5, h6 {
 :focus-visible {
   outline: 2px solid var(--color-blue);
   outline-offset: 2px;
+}
+
+/* ── Visually hidden (screen reader only) ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 /* ── Link reset ── */

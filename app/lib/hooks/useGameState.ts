@@ -24,7 +24,57 @@ export interface GameState {
   blindMode: boolean;
 }
 
-export function useGameState(puzzle: Puzzle, blindMode = false) {
+const SAVE_KEY_PREFIX = 'shikaku_save_';
+const MAX_SAVED_PUZZLES = 5;
+
+function getSaveKey(seed: string) {
+  return `${SAVE_KEY_PREFIX}${seed}`;
+}
+
+function loadSavedState(seed: string | undefined): PlacedRect[] | null {
+  if (!seed || typeof window === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(getSaveKey(seed));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  } catch {}
+  return null;
+}
+
+function saveState(seed: string | undefined, placed: PlacedRect[]) {
+  if (!seed || typeof window === 'undefined') return;
+  try {
+    if (placed.length === 0) {
+      localStorage.removeItem(getSaveKey(seed));
+      return;
+    }
+    localStorage.setItem(getSaveKey(seed), JSON.stringify(placed));
+    // Evict oldest saved puzzles if over the cap
+    const allKeys: { key: string; time: number }[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(SAVE_KEY_PREFIX)) {
+        allKeys.push({ key, time: i });
+      }
+    }
+    if (allKeys.length > MAX_SAVED_PUZZLES) {
+      // Remove oldest entries (earliest in the list = oldest stored)
+      allKeys.slice(0, allKeys.length - MAX_SAVED_PUZZLES).forEach(({ key }) => {
+        localStorage.removeItem(key);
+      });
+    }
+  } catch {}
+}
+
+function clearSave(seed: string | undefined) {
+  if (!seed || typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(getSaveKey(seed));
+  } catch {}
+}
+
+export function useGameState(puzzle: Puzzle, blindMode = false, puzzleSeed?: string) {
   const [placed, setPlaced] = useState<PlacedRect[]>([]);
   const [history, setHistory] = useState<GameHistory[]>([{ placed: [] }]);
   const [historyIndex, setHistoryIndex] = useState(0);
@@ -81,6 +131,30 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
       timerRef.current = null;
     };
   }, [isComplete]);
+
+  // Restore saved state on mount
+  const restoredRef = useRef(false);
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const saved = loadSavedState(puzzleSeed);
+    if (saved && saved.length > 0) {
+      setPlaced(saved);
+      setHistory([{ placed: [] }, { placed: saved }]);
+      setHistoryIndex(1);
+      setRestored(true);
+    }
+  }, [puzzleSeed]);
+
+  // Auto-save on every move
+  useEffect(() => {
+    if (isComplete) {
+      clearSave(puzzleSeed);
+    } else {
+      saveState(puzzleSeed, placed);
+    }
+  }, [placed, isComplete, puzzleSeed]);
 
   const recolorAll = useCallback(
     (rects: PlacedRect[]): PlacedRect[] => {
@@ -332,5 +406,6 @@ export function useGameState(puzzle: Puzzle, blindMode = false) {
     canRedo: historyIndex < history.length - 1,
     completionPercent,
     unlockedColors,
+    restored,
   };
 }

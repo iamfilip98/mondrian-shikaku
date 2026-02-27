@@ -8,6 +8,8 @@ import { useAuth } from '~/lib/hooks/useAuth';
 import { useToast } from '~/lib/hooks/useToast';
 import { trackEvent } from '~/lib/analytics';
 import { setSettingItem } from '~/lib/utils/settingStorage';
+import { useKeyboardControls } from '~/lib/hooks/useKeyboardControls';
+import { generateEmojiGrid } from '~/lib/utils/emojiGrid';
 import GameBoard from './GameBoard';
 import GameControls from './GameControls';
 import SettingsDrawer from './SettingsDrawer';
@@ -39,7 +41,7 @@ export default function GamePage({
     try { return localStorage.getItem('showDragCounter') !== 'false'; } catch { return true; }
   });
 
-  const gameState = useGameState(puzzle, blindMode);
+  const gameState = useGameState(puzzle, blindMode, puzzleSeed);
   const sound = useSound();
   const { user, refreshProfile, getToken } = useAuth();
   const { addToast } = useToast();
@@ -69,6 +71,15 @@ export default function GamePage({
 
   // Solve submission guard
   const solveSubmittedRef = useRef(false);
+
+  // Show toast when resuming saved progress
+  const resumeToastShown = useRef(false);
+  useEffect(() => {
+    if (gameState.restored && !resumeToastShown.current) {
+      resumeToastShown.current = true;
+      addToast('Resuming saved progress...', 'info');
+    }
+  }, [gameState.restored, addToast]);
 
   // Track puzzle_started once per puzzle
   const puzzleTrackedRef = useRef(false);
@@ -114,6 +125,13 @@ export default function GamePage({
       hints_used: gameState.hintsUsed,
       blind_mode: blindMode,
     });
+    // Increment anonymous solve counter
+    if (!user) {
+      try {
+        const current = parseInt(sessionStorage.getItem('anonSolves') || '0', 10);
+        sessionStorage.setItem('anonSolves', String(current + 1));
+      } catch {}
+    }
     // Schedule win sequence
     setTimeout(() => setShowConfetti(true), 500);
     setTimeout(() => {
@@ -153,6 +171,9 @@ export default function GamePage({
         solveTimeSeconds: gameState.elapsedSeconds,
         hintsUsed: gameState.hintsUsed,
         blindModeOn: blindMode,
+        placedRects: gameState.placed.map(r => ({
+          row: r.row, col: r.col, width: r.width, height: r.height,
+        })),
       };
 
       let lastError = '';
@@ -413,8 +434,38 @@ export default function GamePage({
     }
   }, [gameState, sound, difficulty, addToast]);
 
+  // Clear with double-press confirmation
+  const clearConfirmRef = useRef(false);
+  const clearTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleClear = useCallback(() => {
+    if (gameState.isComplete) return;
+    if (gameState.placed.length === 0) return;
+    if (clearConfirmRef.current) {
+      clearConfirmRef.current = false;
+      if (clearTimeoutRef.current) clearTimeout(clearTimeoutRef.current);
+      gameState.clearAll();
+      addToast('Board cleared', 'info');
+    } else {
+      clearConfirmRef.current = true;
+      addToast('Press again to clear board', 'info');
+      clearTimeoutRef.current = setTimeout(() => {
+        clearConfirmRef.current = false;
+      }, 3000);
+    }
+  }, [gameState, addToast]);
+
+  useKeyboardControls({
+    onUndo: gameState.undo,
+    onRedo: gameState.redo,
+    onHint: handleHint,
+    onClear: handleClear,
+    onSettings: () => setSettingsOpen(true),
+    isComplete: gameState.isComplete,
+  });
+
   const handleShare = useCallback(async () => {
-    const text = `MONDRIAN SHIKAKU · ${puzzleType} · ${difficulty} · ${Math.floor(gameState.elapsedSeconds / 60)}:${String(gameState.elapsedSeconds % 60).padStart(2, '0')}`;
+    const emojiGrid = generateEmojiGrid(gameState.placed, puzzle.width, puzzle.height);
+    const text = `MONDRIAN SHIKAKU · ${puzzleType} · ${difficulty} · ${Math.floor(gameState.elapsedSeconds / 60)}:${String(gameState.elapsedSeconds % 60).padStart(2, '0')}\n\n${emojiGrid}\n\nmondrianshikaku.com`;
     try {
       if (navigator.share) {
         await navigator.share({ text });
@@ -431,6 +482,15 @@ export default function GamePage({
 
   const svgWidth = cellSize * puzzle.width;
   const svgHeight = cellSize * puzzle.height;
+
+  // Screen reader description of board state
+  const boardDescription = useMemo(() => {
+    const total = puzzle.clues.length;
+    const correctCount = gameState.placed.filter(r => r._actuallyCorrect ?? r.isCorrect).length;
+    if (gameState.isComplete) return `Puzzle complete! All ${total} rectangles placed.`;
+    if (correctCount === 0) return `${total} rectangles to place. None placed yet.`;
+    return `${correctCount} of ${total} rectangles placed.`;
+  }, [gameState.placed, gameState.isComplete, puzzle.clues.length]);
 
   const boardContent = (
     <div className="game-board-container relative" style={{ width: svgWidth, height: svgHeight }}>
@@ -457,6 +517,9 @@ export default function GamePage({
         originY={svgHeight / 2}
         active={showConfetti}
       />
+      <div className="sr-only" aria-live="polite" aria-atomic="true">
+        {boardDescription}
+      </div>
     </div>
   );
 
@@ -473,6 +536,8 @@ export default function GamePage({
           showTimer={gameState.showTimer}
           hintsRemaining={gameState.hintsRemaining}
           onHint={handleHint}
+          onClear={handleClear}
+          canClear={gameState.placed.length > 0 && !gameState.isComplete}
           onSettings={() => setSettingsOpen(true)}
         />
       </div>

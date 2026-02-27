@@ -201,7 +201,7 @@ export default function Home() {
 
       {/* Scheduled Puzzles Strip */}
       <section className="w-full border-y-[3px] border-[var(--color-border)]">
-        <div className="grid grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-3">
           {[
             { name: 'Daily', grid: '10×10', href: '/daily', getMs: getTimeUntilMidnightUTC, seed: currentSeeds.daily, colorClass: '!bg-[var(--color-red)] !text-[var(--color-white)]' },
             { name: 'Weekly', grid: '20×20', href: '/weekly', getMs: getTimeUntilMondayUTC, seed: currentSeeds.weekly, colorClass: '!bg-[var(--color-blue)] !text-[var(--color-white)]' },
@@ -211,7 +211,7 @@ export default function Home() {
             return (
               <div
                 key={p.name}
-                className={`flex flex-col items-center justify-center py-8 px-4 ${i < 2 ? 'border-r-[3px] border-[var(--color-border)]' : ''}`}
+                className={`flex flex-col items-center justify-center py-8 px-4 ${i < 2 ? 'border-b-[3px] md:border-b-0 md:border-r-[3px] border-[var(--color-border)]' : ''}`}
               >
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--text-2xl)', color: 'var(--color-text)' }}>
                   {p.name}
@@ -273,7 +273,7 @@ export default function Home() {
           {[
             { title: 'Game', links: [{ label: 'Free Play', href: '/play' }, { label: 'Daily', href: '/daily' }, { label: 'Weekly', href: '/weekly' }, { label: 'Monthly', href: '/monthly' }] },
             { title: 'Learn', links: [{ label: 'How to Solve', href: '/blog/how-to-solve-shikaku' }, { label: 'Mathematics', href: '/blog/mathematics-of-shikaku' }] },
-            { title: 'Community', links: [{ label: 'Leaderboard', href: '/leaderboard' }, { label: 'Hall of Fame', href: '/hall-of-fame' }] },
+            { title: 'Community', links: [{ label: 'Leaderboard', href: '/leaderboard' }, { label: 'Hall of Fame', href: '/hall-of-fame' }, { label: 'Twitter/X (Coming Soon)', href: '#', disabled: true }, { label: 'Discord (Coming Soon)', href: '#', disabled: true }] },
             { title: 'About', links: [{ label: 'About', href: '/about' }, { label: 'Mondrian & Logic', href: '/blog/mondrian-and-logic' }] },
           ].map((section, i) => (
             <div key={section.title} className={`py-8 px-6 ${i < 3 ? 'border-r-[3px] border-[var(--color-border)]' : ''}`}>
@@ -281,9 +281,15 @@ export default function Home() {
                 {section.title}
               </span>
               {section.links.map((link) => (
-                <Link key={link.href} to={link.href} className="block mb-2" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text)' }}>
-                  {link.label}
-                </Link>
+                'disabled' in link && link.disabled ? (
+                  <span key={link.label} className="block mb-2" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text-muted)', opacity: 0.5 }}>
+                    {link.label}
+                  </span>
+                ) : (
+                  <Link key={link.href} to={link.href} className="block mb-2" style={{ fontFamily: 'var(--font-body)', fontSize: 'var(--text-sm)', color: 'var(--color-text)' }}>
+                    {link.label}
+                  </Link>
+                )
               ))}
             </div>
           ))}

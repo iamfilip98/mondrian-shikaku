@@ -17,6 +17,11 @@ export function meta() {
       content: `Today's Shikaku puzzle. A fresh 10×10 Medium grid every day. Compete on the daily leaderboard.`,
     },
     { property: 'og:title', content: `Daily Puzzle — Mondrian Shikaku` },
+    { property: 'og:image', content: 'https://mondrianshikaku.com/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:image', content: 'https://mondrianshikaku.com/og-image.png' },
   ];
 }
 
@@ -60,7 +65,7 @@ export default function Daily() {
             color: 'var(--color-text)',
           }}
         >
-          {new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
+          {new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, {
             weekday: 'long',
             year: 'numeric',
             month: 'long',

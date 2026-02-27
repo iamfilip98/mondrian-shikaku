@@ -105,6 +105,7 @@ export default function WinConfetti({
   return (
     <canvas
       ref={canvasRef}
+      aria-hidden="true"
       width={width}
       height={height}
       style={{

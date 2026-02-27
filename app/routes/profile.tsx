@@ -48,7 +48,7 @@ function formatTime(seconds: number): string {
 
 function formatDate(iso: string): string {
   const date = new Date(iso);
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(undefined, {
     month: 'long',
     year: 'numeric',
   });
@@ -65,10 +65,17 @@ function Toggle({
 }) {
   return (
     <button
+      type="button"
       role="switch"
       aria-checked={value}
       aria-label={label}
       onClick={() => onChange(!value)}
+      onKeyDown={(e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          onChange(!value);
+        }
+      }}
       className="flex items-center justify-between w-full py-3 cursor-pointer"
       style={{
         fontFamily: 'var(--font-body)',
@@ -88,14 +95,14 @@ function Toggle({
         }}
       >
         <motion.div
-          className="absolute top-0"
+          className="absolute"
           style={{
             width: '18px',
             height: '18px',
             backgroundColor: 'var(--color-text)',
             top: '1px',
           }}
-          animate={{ left: value ? '21px' : '1px' }}
+          animate={{ x: value ? 21 : 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
       </div>
@@ -300,7 +307,7 @@ export default function Profile() {
         <div
           className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4"
         >
-          <div
+          <h3
             style={{
               fontFamily: 'var(--font-body)',
               fontWeight: 400,
@@ -312,7 +319,7 @@ export default function Profile() {
             }}
           >
             Puzzles Completed
-          </div>
+          </h3>
           <div
             style={{
               fontFamily: 'var(--font-body)',
@@ -330,7 +337,7 @@ export default function Profile() {
           className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4"
           style={{ borderLeftWidth: '6px', borderLeftColor: 'var(--color-yellow)' }}
         >
-          <div
+          <h3
             style={{
               fontFamily: 'var(--font-body)',
               fontWeight: 400,
@@ -342,7 +349,7 @@ export default function Profile() {
             }}
           >
             Current Streak
-          </div>
+          </h3>
           <div
             style={{
               fontFamily: 'var(--font-body)',
@@ -360,7 +367,7 @@ export default function Profile() {
           className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4"
           style={{ borderLeftWidth: '6px', borderLeftColor: 'var(--color-yellow)' }}
         >
-          <div
+          <h3
             style={{
               fontFamily: 'var(--font-body)',
               fontWeight: 400,
@@ -372,7 +379,7 @@ export default function Profile() {
             }}
           >
             Longest Streak
-          </div>
+          </h3>
           <div
             style={{
               fontFamily: 'var(--font-body)',
@@ -551,7 +558,7 @@ export default function Profile() {
                 onClick={() => setTheme(opt)}
                 className="flex-1 flex items-center justify-center cursor-pointer relative"
                 style={{
-                  height: '40px',
+                  height: '44px',
                   fontFamily: 'var(--font-body)',
                   fontSize: 'var(--text-sm)',
                   color:

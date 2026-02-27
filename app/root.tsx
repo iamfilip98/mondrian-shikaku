@@ -21,7 +21,10 @@ import {
 import { ToastProvider } from '~/lib/hooks/useToast';
 import Nav from '~/components/ui/Nav';
 import ToastContainer from '~/components/ui/ToastContainer';
+import OfflineBanner from '~/components/ui/OfflineBanner';
 import './app.css';
+
+const swRegisterScript = `if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('/sw.js')})}`;
 
 const initThemeScript = `(function(){try{
   var s = localStorage.getItem('theme');
@@ -34,6 +37,7 @@ const initThemeScript = `(function(){try{
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 export const links: Route.LinksFunction = () => [
+  { rel: 'manifest', href: '/manifest.json' },
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
     rel: 'preconnect',
@@ -51,12 +55,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <script dangerouslySetInnerHTML={{ __html: initThemeScript }} />
+        <script dangerouslySetInnerHTML={{ __html: swRegisterScript }} />
         <Meta />
         <Links />
       </head>
       <body>
+        <a
+          href="#main-content"
+          className="fixed top-0 left-0 z-[9999] px-4 py-2 -translate-y-full focus:translate-y-0"
+          style={{
+            backgroundColor: 'var(--color-blue)',
+            color: 'var(--color-white)',
+            fontFamily: 'var(--font-body)',
+            fontSize: 'var(--text-sm)',
+            transition: 'transform 0.15s ease',
+          }}
+        >
+          Skip to content
+        </a>
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -77,6 +95,7 @@ function AppContent() {
       <Nav />
       <AnimatePresence mode="wait">
         <motion.main
+          id="main-content"
           key={location.pathname}
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -105,6 +124,7 @@ export default function App() {
         <ToastProvider>
           <AppContent />
           <ToastContainer />
+          <OfflineBanner />
         </ToastProvider>
       </ThemeContext.Provider>
     </ClerkProvider>

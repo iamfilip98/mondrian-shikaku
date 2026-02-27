@@ -11,7 +11,7 @@ import { getUserSolveForSeed, type SolveResult } from '~/lib/supabase/queries';
 
 export function meta() {
   const now = new Date();
-  const monthStr = now.toLocaleDateString('en-US', {
+  const monthStr = now.toLocaleDateString(undefined, {
     month: 'long',
     year: 'numeric',
   });
@@ -22,6 +22,11 @@ export function meta() {
       content: `The monthly Nightmare puzzle. A massive 40×40 grid. Only the best will finish.`,
     },
     { property: 'og:title', content: `Monthly Puzzle — Mondrian Shikaku` },
+    { property: 'og:image', content: 'https://mondrianshikaku.com/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:image', content: 'https://mondrianshikaku.com/og-image.png' },
   ];
 }
 
@@ -40,7 +45,7 @@ export default function Monthly() {
     const seed = `monthly-${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     setSeedStr(seed);
     setMonthStr(
-      now.toLocaleDateString('en-US', {
+      now.toLocaleDateString(undefined, {
         month: 'long',
         year: 'numeric',
       })

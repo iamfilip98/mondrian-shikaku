@@ -13,7 +13,8 @@ export default function ToastContainer() {
   return (
     <div
       role="status"
-      aria-live="polite"
+      aria-live="assertive"
+      aria-atomic="true"
       style={{
         position: 'fixed',
         bottom: '24px',
@@ -58,6 +59,9 @@ export default function ToastContainer() {
               gap: '8px',
             }}
           >
+            <span className="sr-only">
+              {toast.type === 'error' ? 'Error: ' : toast.type === 'success' ? 'Success: ' : 'Info: '}
+            </span>
             <span style={{ flex: 1 }}>{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}

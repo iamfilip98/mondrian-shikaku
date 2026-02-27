@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from 'react-router';
 import { getAuthUserId } from '~/lib/auth/verify.server';
 import { getServerSupabase } from '~/lib/supabase/server';
+import { validateSolve } from '~/lib/puzzle/validate.server';
 
 const VALID_PUZZLE_TYPES = ['daily', 'weekly', 'monthly', 'free'] as const;
 const VALID_DIFFICULTIES = ['primer', 'easy', 'medium', 'hard', 'expert', 'nightmare'] as const;
@@ -28,7 +29,7 @@ export async function action({ request }: ActionFunctionArgs) {
   }
 
   const body = await request.json();
-  const { puzzleType, puzzleSeed, difficulty, gridWidth, gridHeight, solveTimeSeconds, hintsUsed, blindModeOn } = body;
+  const { puzzleType, puzzleSeed, difficulty, gridWidth, gridHeight, solveTimeSeconds, hintsUsed, blindModeOn, placedRects } = body;
 
   // Validate puzzleType
   if (!VALID_PUZZLE_TYPES.includes(puzzleType)) {
@@ -64,6 +65,15 @@ export async function action({ request }: ActionFunctionArgs) {
       solveTimeSeconds < 1 || solveTimeSeconds > 86400) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 });
   }
+
+  // SEC-4: Minimum solve time based on grid area
+  const gridArea = gridWidth * gridHeight;
+  const minSolveTime = Math.max(1, Math.floor(gridArea / 10));
+  if (solveTimeSeconds < minSolveTime) {
+    console.warn(`[api.solve] Suspicious solve: user=${userId} time=${solveTimeSeconds}s min=${minSolveTime}s grid=${gridWidth}x${gridHeight}`);
+    return Response.json({ error: 'Invalid request.' }, { status: 400 });
+  }
+
   // Validate hintsUsed: must be 0–3
   if (hintsUsed !== undefined && hintsUsed !== null) {
     if (typeof hintsUsed !== 'number' || !Number.isInteger(hintsUsed) ||
@@ -76,16 +86,28 @@ export async function action({ request }: ActionFunctionArgs) {
     return Response.json({ error: 'Invalid request.' }, { status: 400 });
   }
 
+  // Validate placedRects: must be an array of rectangle objects
+  if (!Array.isArray(placedRects) || placedRects.length === 0) {
+    return Response.json({ error: 'Invalid request.' }, { status: 400 });
+  }
+
+  // Server-side puzzle validation: regenerate puzzle and verify solution
+  const validation = validateSolve(placedRects, puzzleSeed, difficulty, gridWidth, gridHeight);
+  if (!validation.valid) {
+    console.warn(`[api.solve] Invalid solve: user=${userId} reason=${validation.reason} seed=${puzzleSeed}`);
+    return Response.json({ error: 'Invalid request.' }, { status: 400 });
+  }
+
   const supabase = getServerSupabase();
 
-  // Rate limiting: max 5 solves per minute per user
+  // Rate limiting: max 2 solves per minute per user
   const { count: recentSolves } = await supabase
     .from('solves')
     .select('*', { count: 'exact', head: true })
     .eq('user_id', userId)
     .gte('created_at', new Date(Date.now() - 60_000).toISOString());
 
-  if (recentSolves !== null && recentSolves >= 5) {
+  if (recentSolves !== null && recentSolves >= 2) {
     return Response.json({ error: 'Too many requests. Please slow down.' }, { status: 429 });
   }
 

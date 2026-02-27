@@ -81,8 +81,8 @@ export default function LeaderboardTable({
                   ? 'rgba(19, 86, 162, 0.08)'
                   : 'transparent',
               }}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
               transition={{ delay: i * 0.03 }}
             >
               <span

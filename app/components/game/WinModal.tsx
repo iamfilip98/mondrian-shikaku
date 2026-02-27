@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { Link } from 'react-router';
 import Button from '~/components/ui/Button';
 import Badge from '~/components/ui/Badge';
@@ -39,6 +39,17 @@ export default function WinModal({
   onClose,
 }: WinModalProps) {
   const focusTrapRef = useFocusTrap(isOpen, onClose);
+  const reducedMotion = useReducedMotion();
+  const dur = reducedMotion ? 0 : 0.2;
+
+  // Track anonymous session solve count
+  const anonSolveCount = (() => {
+    if (isLoggedIn !== false || !isOpen) return 0;
+    try {
+      const current = parseInt(sessionStorage.getItem('anonSolves') || '0', 10);
+      return current;
+    } catch { return 0; }
+  })();
 
   return (
     <AnimatePresence>
@@ -51,6 +62,7 @@ export default function WinModal({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: dur }}
             onClick={onClose}
           />
 
@@ -66,10 +78,10 @@ export default function WinModal({
               left: '50%',
               width: 'min(420px, 90vw)',
             }}
-            initial={{ opacity: 0, scale: 0.96, x: '-50%', y: '-50%' }}
+            initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.96, x: '-50%', y: '-50%' }}
             animate={{ opacity: 1, scale: 1, x: '-50%', y: '-50%' }}
-            exit={{ opacity: 0, scale: 0.96, x: '-50%', y: '-50%' }}
-            transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}
+            exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.96, x: '-50%', y: '-50%' }}
+            transition={{ duration: dur, ease: [0.23, 1, 0.32, 1] }}
           >
             {/* Header accent */}
             <div
@@ -83,8 +95,13 @@ export default function WinModal({
               aria-label="Close"
               style={{
                 position: 'absolute',
-                top: '14px',
-                right: '14px',
+                top: '10px',
+                right: '10px',
+                width: '44px',
+                height: '48px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -181,7 +198,23 @@ export default function WinModal({
 
               {/* Sign in prompt */}
               {isLoggedIn === false && (
-                <div className="mt-4 text-center">
+                <div
+                  className="mt-4 text-center border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-3"
+                  style={{ borderLeftWidth: '4px', borderLeftColor: 'var(--color-yellow)' }}
+                >
+                  {anonSolveCount > 0 && (
+                    <span
+                      className="block mb-1"
+                      style={{
+                        fontFamily: 'var(--font-body)',
+                        fontWeight: 500,
+                        fontSize: 'var(--text-xs)',
+                        color: 'var(--color-text)',
+                      }}
+                    >
+                      You've solved {anonSolveCount} puzzle{anonSolveCount !== 1 ? 's' : ''} this session.
+                    </span>
+                  )}
                   <Link
                     to="/login"
                     style={{
@@ -190,7 +223,7 @@ export default function WinModal({
                       color: 'var(--color-text-muted)',
                     }}
                   >
-                    Sign in to save your solve and appear on leaderboards
+                    Sign in to save your stats and appear on leaderboards
                   </Link>
                 </div>
               )}

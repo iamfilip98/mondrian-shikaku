@@ -28,6 +28,7 @@ export default function Nav() {
           to="/"
           className="flex items-center gap-2 px-4 h-full border-r-[3px] border-[var(--color-border)] shrink-0"
           onClick={() => setMenuOpen(false)}
+          aria-label="Mondrian Shikaku Home"
         >
           <div
             className="flex items-center justify-center"
@@ -74,6 +75,7 @@ export default function Nav() {
                 key={link.href}
                 to={link.href}
                 className="relative flex items-center justify-center h-full px-4 border-r-[3px] border-[var(--color-border)] shrink-0"
+                aria-current={isActive ? 'page' : undefined}
                 style={{
                   fontFamily: 'var(--font-body)',
                   fontWeight: isActive ? 500 : 400,
@@ -203,6 +205,7 @@ export default function Nav() {
                   key={link.href}
                   to={link.href}
                   className="flex items-center px-6 border-b-2 border-[var(--color-border)]"
+                  aria-current={isActive ? 'page' : undefined}
                   style={{
                     height: '48px',
                     fontFamily: 'var(--font-body)',

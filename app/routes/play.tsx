@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { generatePuzzle } from '~/lib/puzzle/generator';
 import { DIFFICULTY_CONFIGS, type Difficulty } from '~/lib/puzzle/types';
 import { trackEvent } from '~/lib/analytics';
 import GamePage from '~/components/game/GamePage';
@@ -53,7 +52,7 @@ export default function Play() {
     `free-${Date.now()}-${Math.random().toString(36).slice(2)}`
   );
 
-  const [puzzle, setPuzzle] = useState<ReturnType<typeof generatePuzzle> | null>(null);
+  const [puzzle, setPuzzle] = useState<import('~/lib/puzzle/types').Puzzle | null>(null);
   const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
@@ -64,8 +63,10 @@ export default function Play() {
     setGenerating(true);
     setPuzzle(null);
 
-    // Defer generation to next frame so UI can show loading state
-    const id = requestAnimationFrame(() => {
+    // Dynamic import to keep generator out of initial bundle
+    let cancelled = false;
+    import('~/lib/puzzle/generator').then(({ generatePuzzle }) => {
+      if (cancelled) return;
       const config = DIFFICULTY_CONFIGS[selected];
       try {
         const p = generatePuzzle({
@@ -80,7 +81,7 @@ export default function Play() {
       }
       setGenerating(false);
     });
-    return () => cancelAnimationFrame(id);
+    return () => { cancelled = true; };
   }, [selected, puzzleSeed]);
 
   const handleNextPuzzle = () => {
@@ -209,9 +210,8 @@ export default function Play() {
       </p>
 
       <div
-        className="grid gap-3"
+        className="grid grid-cols-2 md:grid-cols-4 gap-3"
         style={{
-          gridTemplateColumns: 'repeat(4, 1fr)',
           gridAutoRows: 'minmax(120px, auto)',
         }}
       >

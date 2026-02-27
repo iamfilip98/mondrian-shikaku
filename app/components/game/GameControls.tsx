@@ -10,6 +10,8 @@ interface GameControlsProps {
   showTimer: boolean;
   hintsRemaining: number;
   onHint: () => void;
+  onClear: () => void;
+  canClear: boolean;
   onSettings: () => void;
 }
 
@@ -22,6 +24,8 @@ export default function GameControls({
   showTimer,
   hintsRemaining,
   onHint,
+  onClear,
+  canClear,
   onSettings,
 }: GameControlsProps) {
   return (
@@ -30,7 +34,7 @@ export default function GameControls({
       style={{
         height: '48px',
         display: 'grid',
-        gridTemplateColumns: '48px 48px 1fr auto 44px',
+        gridTemplateColumns: '48px 48px 1fr auto auto 44px 44px',
         alignItems: 'center',
       }}
     >
@@ -117,6 +121,40 @@ export default function GameControls({
       >
         Hint ({hintsRemaining})
       </motion.button>
+
+      {/* Clear */}
+      <motion.button
+        className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)] cursor-pointer"
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-sm)',
+          color: canClear ? 'var(--color-text)' : 'var(--color-text-muted)',
+          backgroundColor: 'transparent',
+          opacity: canClear ? 1 : 0.4,
+        }}
+        whileHover={canClear ? { backgroundColor: 'var(--color-surface-2)' } : undefined}
+        onClick={onClear}
+        disabled={!canClear}
+        aria-label="Clear board"
+      >
+        ✕
+      </motion.button>
+
+      {/* Help */}
+      <a
+        href="/blog/how-to-solve-shikaku"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)]"
+        style={{
+          fontFamily: 'var(--font-body)',
+          fontSize: 'var(--text-sm)',
+          color: 'var(--color-text-muted)',
+        }}
+        aria-label="How to play"
+      >
+        ?
+      </a>
 
       {/* Settings */}
       <motion.button

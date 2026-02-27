@@ -19,6 +19,11 @@ export function meta() {
       content: `This week's Shikaku challenge. A 20×20 Expert grid resets every Monday.`,
     },
     { property: 'og:title', content: `Weekly Puzzle — Mondrian Shikaku` },
+    { property: 'og:image', content: 'https://mondrianshikaku.com/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:image', content: 'https://mondrianshikaku.com/og-image.png' },
   ];
 }
 

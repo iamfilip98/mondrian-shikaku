@@ -20,18 +20,9 @@ export async function action({ request }: ActionFunctionArgs) {
 
   const supabase = getServerSupabase();
 
-  // Rate limiting: max 3 profile creates per hour per user
-  const { count: recentCreates } = await supabase
-    .from('profiles')
-    .select('*', { count: 'exact', head: true })
-    .eq('id', userId)
-    .gte('created_at', new Date(Date.now() - 3600_000).toISOString());
+  // Duplicate key constraint (23505) is sufficient rate limiting for profile creation —
+  // each user can only have one profile, so no additional rate limit is needed.
 
-  if (recentCreates !== null && recentCreates >= 3) {
-    return Response.json({ error: 'Too many requests.' }, { status: 429 });
-  }
-
-  // Use INSERT ... ON CONFLICT DO NOTHING to prevent overwriting existing profiles
   const { data, error } = await supabase
     .from('profiles')
     .insert({ id: userId, username })

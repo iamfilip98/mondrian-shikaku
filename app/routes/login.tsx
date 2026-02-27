@@ -4,6 +4,12 @@ export function meta() {
   return [
     { title: 'Sign In — Mondrian Shikaku' },
     { name: 'description', content: 'Sign in to Mondrian Shikaku to save your progress and compete on leaderboards.' },
+    { property: 'og:title', content: 'Sign In — Mondrian Shikaku' },
+    { property: 'og:image', content: 'https://mondrianshikaku.com/og-image.png' },
+    { property: 'og:image:width', content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+    { name: 'twitter:image', content: 'https://mondrianshikaku.com/og-image.png' },
   ];
 }
 

@@ -1,0 +1,16 @@
+{
+  "name": "Mondrian Shikaku",
+  "short_name": "Shikaku",
+  "description": "A Mondrian-inspired Shikaku logic puzzle game. Logic is an art form.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F5F0",
+  "theme_color": "#D40920",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "48x48",
+      "type": "image/x-icon"
+    }
+  ]
+}

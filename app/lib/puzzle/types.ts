@@ -1,5 +1,5 @@
 export type Difficulty =
-  | 'primer'
+  | 'primer' // Deprecated: kept for DB backward compat, not shown in UI
   | 'easy'
   | 'medium'
   | 'hard'

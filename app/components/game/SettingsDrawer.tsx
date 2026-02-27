@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { useTheme, type Theme } from '~/lib/hooks/useTheme';
 import { useFocusTrap } from '~/lib/hooks/useFocusTrap';
 
@@ -26,9 +26,16 @@ function Toggle({
 }) {
   return (
     <button
+      type="button"
       role="switch"
       aria-checked={value}
       onClick={() => onChange(!value)}
+      onKeyDown={(e) => {
+        if (e.key === ' ' || e.key === 'Enter') {
+          e.preventDefault();
+          onChange(!value);
+        }
+      }}
       className="flex items-center justify-between w-full py-3 cursor-pointer"
       style={{
         fontFamily: 'var(--font-body)',
@@ -48,14 +55,14 @@ function Toggle({
         }}
       >
         <motion.div
-          className="absolute top-0"
+          className="absolute"
           style={{
             width: '18px',
             height: '18px',
             backgroundColor: 'var(--color-text)',
             top: '1px',
           }}
-          animate={{ left: value ? '21px' : '1px' }}
+          animate={{ x: value ? 21 : 1 }}
           transition={{ type: 'spring', stiffness: 500, damping: 30 }}
         />
       </div>
@@ -77,6 +84,7 @@ export default function SettingsDrawer({
 }: SettingsDrawerProps) {
   const { theme, setTheme } = useTheme();
   const focusTrapRef = useFocusTrap(isOpen, onClose);
+  const reducedMotion = useReducedMotion();
 
   return (
     <AnimatePresence>
@@ -103,7 +111,7 @@ export default function SettingsDrawer({
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+            transition={reducedMotion ? { duration: 0 } : { type: 'spring', stiffness: 400, damping: 35 }}
           >
             {/* Header */}
             <div
@@ -123,8 +131,8 @@ export default function SettingsDrawer({
                 onClick={onClose}
                 className="flex items-center justify-center cursor-pointer"
                 style={{
-                  width: '32px',
-                  height: '32px',
+                  width: '44px',
+                  height: '48px',
                   fontFamily: 'var(--font-body)',
                   fontSize: 'var(--text-lg)',
                   color: 'var(--color-text)',
@@ -161,7 +169,7 @@ export default function SettingsDrawer({
                       onClick={() => setTheme(opt)}
                       className="flex-1 flex items-center justify-center cursor-pointer relative"
                       style={{
-                        height: '40px',
+                        height: '44px',
                         fontFamily: 'var(--font-body)',
                         fontSize: 'var(--text-sm)',
                         color:

@@ -113,13 +113,13 @@ export default function About() {
             fontSize: 'var(--text-2xl)',
           }}
         >
-          Six Difficulty Tiers
+          Five Difficulty Tiers
         </h2>
         <p className="mb-6">
-          From 4×4 Primer puzzles that teach through play, to 40×40 Nightmare grids that demand
+          From 6×6 Easy puzzles to 40×40 Nightmare grids that demand
           sustained concentration and zooming navigation. Difficulty is measured not just by grid
           size, but by the logical complexity required to solve — specifically, the number of
-          backtracking decisions the solver must make. A Primer puzzle requires zero guessing. A
+          backtracking decisions the solver must make. An Easy puzzle requires minimal guessing. A
           Nightmare puzzle requires dozens of tentative decisions.
         </p>
 
