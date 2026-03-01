@@ -42,7 +42,6 @@ export default memo(function GameBoard({
     return {
       grid: 1,
       rect: Math.max(1, scale * 5),
-      outer: Math.max(2, scale * 10),
       preview: Math.max(1, scale * 2),
       clueHalo: Math.max(1, scale * 4),
     };
@@ -136,24 +135,24 @@ export default memo(function GameBoard({
           })
         )}
 
-      {/* Layer 2: Grid lines (below placed rects so colored boxes cover them) */}
-      {Array.from({ length: puzzle.height + 1 }, (_, i) => (
+      {/* Layer 2: Internal grid lines (outer edges handled by CSS border on container) */}
+      {Array.from({ length: puzzle.height - 1 }, (_, i) => (
         <line
           key={`h-${i}`}
           x1={0}
-          y1={i * cellSize}
+          y1={(i + 1) * cellSize}
           x2={svgWidth}
-          y2={i * cellSize}
+          y2={(i + 1) * cellSize}
           stroke="var(--color-grid-line)"
           strokeWidth={1}
         />
       ))}
-      {Array.from({ length: puzzle.width + 1 }, (_, i) => (
+      {Array.from({ length: puzzle.width - 1 }, (_, i) => (
         <line
           key={`v-${i}`}
-          x1={i * cellSize}
+          x1={(i + 1) * cellSize}
           y1={0}
-          x2={i * cellSize}
+          x2={(i + 1) * cellSize}
           y2={svgHeight}
           stroke="var(--color-grid-line)"
           strokeWidth={1}
@@ -241,18 +240,7 @@ export default memo(function GameBoard({
         </>
       )}
 
-      {/* Layer 5: Outer border — strokeWidth doubled since half is clipped by viewport */}
-      <rect
-        x={0}
-        y={0}
-        width={svgWidth}
-        height={svgHeight}
-        fill="none"
-        stroke="var(--color-grid-border)"
-        strokeWidth={stroke.outer}
-      />
-
-      {/* Layer 6: Clue numbers */}
+      {/* Layer 5: Clue numbers */}
       {puzzle.clues.map((clue, i) => {
         const coveredIdx = coverageMap.get(`${clue.row}-${clue.col}`);
         const isCovered = coveredIdx !== undefined;

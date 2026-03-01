@@ -99,14 +99,16 @@ export default function GamePage({
   const [winStreak, setWinStreak] = useState<number | null>(null);
   const [newBadges, setNewBadges] = useState<string[]>([]);
 
-  // Calculate cell size
+  // Calculate cell size, factoring in proportional outer border so cells are full squares
   const cellSize = useMemo(() => {
     if (typeof window === 'undefined') return 48;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    // Reserve space for the outer border (≈ cellSize * 5/34 per side)
+    const borderFactor = 10 / 34;
     return Math.min(
-      Math.floor((vw * 0.92) / puzzle.width),
-      Math.floor((vh * 0.75) / puzzle.height),
+      Math.floor((vw * 0.92) / (puzzle.width + borderFactor)),
+      Math.floor((vh * 0.75) / (puzzle.height + borderFactor)),
       64
     );
   }, [puzzle.width, puzzle.height]);
@@ -115,6 +117,9 @@ export default function GamePage({
     () => cellSize < 28,
     [cellSize]
   );
+
+  // Outer border as CSS border (outside cells, not eating into them)
+  const outerBorder = Math.max(2, Math.round((cellSize / 34) * 5));
 
   // Win detection
   const prevCompleteRef = useRef(false);
@@ -487,6 +492,8 @@ export default function GamePage({
 
   const svgWidth = cellSize * puzzle.width;
   const svgHeight = cellSize * puzzle.height;
+  const totalWidth = svgWidth + outerBorder * 2;
+  const totalHeight = svgHeight + outerBorder * 2;
 
   // Screen reader description of board state
   const boardDescription = useMemo(() => {
@@ -498,7 +505,14 @@ export default function GamePage({
   }, [gameState.placed, gameState.isComplete, puzzle.clues.length]);
 
   const boardContent = (
-    <div className="game-board-container relative" style={{ width: svgWidth, height: svgHeight }}>
+    <div
+      className="game-board-container relative"
+      style={{
+        width: totalWidth,
+        height: totalHeight,
+        border: `${outerBorder}px solid var(--color-grid-border)`,
+      }}
+    >
       {!introComplete && (
         <IntroAnimation onComplete={handleIntroComplete} />
       )}
@@ -531,7 +545,7 @@ export default function GamePage({
   return (
     <div className="flex flex-col items-center gap-4 py-4 px-4">
       {/* Controls */}
-      <div style={{ width: svgWidth }}>
+      <div style={{ width: totalWidth }}>
         <GameControls
           canUndo={gameState.canUndo}
           canRedo={gameState.canRedo}
