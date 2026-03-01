@@ -258,16 +258,6 @@ export default function GamePage({
     return () => {
       document.removeEventListener('pointerup', cleanupPointer);
       document.removeEventListener('pointercancel', handlePointerCancel);
-      // Clear refs on unmount
-      pointerStartRef.current = null;
-      isDraggingRef.current = false;
-      dragCellRef.current = null;
-      pendingRemovalRef.current = null;
-      activePointersRef.current.clear();
-      isPinchingRef.current = false;
-      pinchCooldownRef.current = false;
-      isPanningRef.current = false;
-      panCooldownRef.current = false;
     };
   }, [cancelInteraction]);
 
@@ -551,8 +541,6 @@ export default function GamePage({
           showTimer={gameState.showTimer}
           hintsRemaining={gameState.hintsRemaining}
           onHint={handleHint}
-          onClear={handleClear}
-          canClear={gameState.placed.length > 0 && !gameState.isComplete}
           onSettings={() => setSettingsOpen(true)}
         />
       </div>

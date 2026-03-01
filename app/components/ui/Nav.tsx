@@ -19,7 +19,7 @@ export default function Nav() {
 
   return (
     <nav
-      className="w-full bg-[var(--color-bg)] border-b-[3px] border-[var(--color-border)]"
+      className="relative w-full bg-[var(--color-bg)] border-b-[3px] border-[var(--color-border)]"
       style={{ height: '56px' }}
     >
       <div className="flex items-center h-full max-w-[1400px] mx-auto">
@@ -165,8 +165,9 @@ export default function Nav() {
 
         {/* Mobile hamburger */}
         <button
-          className="flex md:hidden items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] cursor-pointer"
+          className="flex md:hidden items-center justify-center h-full shrink-0 border-l-[3px] border-[var(--color-border)] cursor-pointer"
           style={{
+            width: '48px',
             fontFamily: 'var(--font-body)',
             fontSize: 'var(--text-lg)',
             color: 'var(--color-text)',
@@ -188,7 +189,7 @@ export default function Nav() {
         {menuOpen && (
           <motion.div
             id="mobile-menu"
-            className="md:hidden absolute left-0 right-0 z-50 bg-[var(--color-bg)] border-b-[3px] border-[var(--color-border)]"
+            className="md:hidden absolute top-full left-0 right-0 z-50 bg-[var(--color-bg)] border-b-[3px] border-[var(--color-border)]"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
