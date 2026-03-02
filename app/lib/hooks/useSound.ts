@@ -42,43 +42,29 @@ export function useSound() {
       if (!ctx) return;
       const t = ctx.currentTime;
 
-      // Main body: pitch-sweeping sine for the "pop"
+      // Main body: gentle low-pitched thud
       const osc1 = ctx.createOscillator();
       const g1 = ctx.createGain();
       osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(480, t);
-      osc1.frequency.exponentialRampToValueAtTime(160, t + 0.08);
-      g1.gain.setValueAtTime(0.25, t);
-      g1.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+      osc1.frequency.setValueAtTime(260, t);
+      osc1.frequency.exponentialRampToValueAtTime(120, t + 0.1);
+      g1.gain.setValueAtTime(0.12, t);
+      g1.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
       osc1.connect(g1).connect(ctx.destination);
       osc1.start(t);
-      osc1.stop(t + 0.12);
+      osc1.stop(t + 0.15);
 
-      // Subtle harmonic layer for warmth
+      // Subtle warmth layer
       const osc2 = ctx.createOscillator();
       const g2 = ctx.createGain();
       osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(720, t);
-      osc2.frequency.exponentialRampToValueAtTime(240, t + 0.06);
-      g2.gain.setValueAtTime(0.08, t);
-      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+      osc2.frequency.setValueAtTime(390, t);
+      osc2.frequency.exponentialRampToValueAtTime(160, t + 0.08);
+      g2.gain.setValueAtTime(0.04, t);
+      g2.gain.exponentialRampToValueAtTime(0.001, t + 0.1);
       osc2.connect(g2).connect(ctx.destination);
       osc2.start(t);
-      osc2.stop(t + 0.08);
-
-      // Tiny click transient from filtered noise
-      const noise = ctx.createBufferSource();
-      noise.buffer = createNoiseBuffer(ctx, 0.02);
-      const nf = ctx.createBiquadFilter();
-      nf.type = 'bandpass';
-      nf.frequency.value = 3000;
-      nf.Q.value = 1.5;
-      const ng = ctx.createGain();
-      ng.gain.setValueAtTime(0.06, t);
-      ng.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
-      noise.connect(nf).connect(ng).connect(ctx.destination);
-      noise.start(t);
-      noise.stop(t + 0.02);
+      osc2.stop(t + 0.1);
     } catch {}
   }, [enabled]);
 

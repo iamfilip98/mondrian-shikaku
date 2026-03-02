@@ -306,19 +306,6 @@ export default function Profile() {
   return (
     <div className="max-w-[800px] mx-auto px-6 py-12">
       {/* Header */}
-      <div className="flex items-center justify-between mb-2">
-        <div />
-        <Link
-          to="/stats"
-          style={{
-            fontFamily: 'var(--font-body)',
-            fontSize: 'var(--text-sm)',
-            color: 'var(--color-blue)',
-          }}
-        >
-          View Detailed Stats →
-        </Link>
-      </div>
       <div className="flex items-center gap-4 mb-10">
         <div
           style={{
