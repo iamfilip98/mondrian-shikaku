@@ -108,7 +108,7 @@ export default function GamePage({
     const borderFactor = 10 / 34;
     return Math.min(
       Math.floor((vw * 0.92) / (puzzle.width + borderFactor)),
-      Math.floor((vh * 0.75) / (puzzle.height + borderFactor)),
+      Math.floor((vh * 0.65) / (puzzle.height + borderFactor)),
       64
     );
   }, [puzzle.width, puzzle.height]);
@@ -563,7 +563,7 @@ export default function GamePage({
       {needsZoom ? (
         <TransformWrapper
           initialScale={1}
-          minScale={1}
+          minScale={0.5}
           maxScale={Math.max(3, Math.ceil(28 / cellSize))}
           centerOnInit={true}
           limitToBounds={true}

@@ -202,6 +202,7 @@ export default function Play() {
         className="mb-10"
         style={{
           fontFamily: 'var(--font-body)',
+          fontWeight: 500,
           fontSize: 'var(--text-base)',
           color: 'var(--color-text-muted)',
         }}
@@ -258,8 +259,9 @@ export default function Play() {
                   className="block mt-1"
                   style={{
                     fontFamily: 'var(--font-body)',
-                    fontSize: 'var(--text-xs)',
-                    opacity: 0.8,
+                    fontWeight: 500,
+                    fontSize: 'var(--text-sm)',
+                    opacity: 0.85,
                   }}
                 >
                   {config.maxGrid}×{config.maxGrid}
@@ -269,8 +271,9 @@ export default function Play() {
                 className="mt-auto"
                 style={{
                   fontFamily: 'var(--font-body)',
-                  fontSize: 'var(--text-xs)',
-                  opacity: 0.6,
+                  fontWeight: 500,
+                  fontSize: 'var(--text-sm)',
+                  opacity: 0.7,
                 }}
               >
                 {config.estimatedTime}
