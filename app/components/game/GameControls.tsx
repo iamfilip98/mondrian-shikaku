@@ -11,6 +11,7 @@ interface GameControlsProps {
   hintsRemaining: number;
   onHint: () => void;
   onSettings: () => void;
+  isComplete?: boolean;
 }
 
 export default function GameControls({
@@ -23,7 +24,12 @@ export default function GameControls({
   hintsRemaining,
   onHint,
   onSettings,
+  isComplete = false,
 }: GameControlsProps) {
+  const undoEnabled = canUndo && !isComplete;
+  const redoEnabled = canRedo && !isComplete;
+  const hintEnabled = hintsRemaining > 0 && !isComplete;
+
   return (
     <div
       className="w-full border-2 border-[var(--color-border)] bg-[var(--color-surface)]"
@@ -39,15 +45,16 @@ export default function GameControls({
         className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)] cursor-pointer"
         style={{
           fontFamily: 'var(--font-body)',
+          fontWeight: 500,
           fontSize: 'var(--text-sm)',
-          color: canUndo ? 'var(--color-text)' : 'var(--color-text-muted)',
+          color: undoEnabled ? 'var(--color-text)' : 'var(--color-text-muted)',
           backgroundColor: 'transparent',
-          opacity: canUndo ? 1 : 0.4,
+          opacity: undoEnabled ? 1 : 0.4,
         }}
-        whileHover={canUndo ? { backgroundColor: 'var(--color-surface-2)' } : undefined}
-        whileTap={canUndo ? { scale: 0.95 } : undefined}
+        whileHover={undoEnabled ? { backgroundColor: 'var(--color-surface-2)' } : undefined}
+        whileTap={undoEnabled ? { scale: 0.95 } : undefined}
         onClick={onUndo}
-        disabled={!canUndo}
+        disabled={!undoEnabled}
         aria-label="Undo"
       >
         ←
@@ -58,15 +65,16 @@ export default function GameControls({
         className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)] cursor-pointer"
         style={{
           fontFamily: 'var(--font-body)',
+          fontWeight: 500,
           fontSize: 'var(--text-sm)',
-          color: canRedo ? 'var(--color-text)' : 'var(--color-text-muted)',
+          color: redoEnabled ? 'var(--color-text)' : 'var(--color-text-muted)',
           backgroundColor: 'transparent',
-          opacity: canRedo ? 1 : 0.4,
+          opacity: redoEnabled ? 1 : 0.4,
         }}
-        whileHover={canRedo ? { backgroundColor: 'var(--color-surface-2)' } : undefined}
-        whileTap={canRedo ? { scale: 0.95 } : undefined}
+        whileHover={redoEnabled ? { backgroundColor: 'var(--color-surface-2)' } : undefined}
+        whileTap={redoEnabled ? { scale: 0.95 } : undefined}
         onClick={onRedo}
-        disabled={!canRedo}
+        disabled={!redoEnabled}
         aria-label="Redo"
       >
         →
@@ -77,6 +85,7 @@ export default function GameControls({
         className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)]"
         style={{
           fontFamily: 'var(--font-body)',
+          fontWeight: 500,
           color: 'var(--color-text)',
         }}
       >
@@ -101,18 +110,19 @@ export default function GameControls({
         className="flex items-center justify-center h-full border-r-2 border-[var(--color-border)] cursor-pointer gap-1 px-3"
         style={{
           fontFamily: 'var(--font-body)',
+          fontWeight: 500,
           fontSize: 'var(--text-sm)',
-          color: hintsRemaining > 0 ? 'var(--color-text)' : 'var(--color-text-muted)',
+          color: hintEnabled ? 'var(--color-text)' : 'var(--color-text-muted)',
           backgroundColor: 'transparent',
-          opacity: hintsRemaining > 0 ? 1 : 0.4,
+          opacity: hintEnabled ? 1 : 0.4,
         }}
         whileHover={
-          hintsRemaining > 0
+          hintEnabled
             ? { backgroundColor: 'var(--color-surface-2)' }
             : undefined
         }
         onClick={onHint}
-        disabled={hintsRemaining <= 0}
+        disabled={!hintEnabled}
         aria-label={`Use hint. ${hintsRemaining} remaining`}
       >
         Hint ({hintsRemaining})

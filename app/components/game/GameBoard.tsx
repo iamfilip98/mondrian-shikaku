@@ -229,7 +229,7 @@ export default memo(function GameBoard({
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
                 fontSize: `${Math.max(5, cellSize * 0.5)}px`,
-                fill: '#ffffff',
+                fill: 'var(--color-text)',
                 opacity: 0.9,
                 userSelect: 'none',
               }}

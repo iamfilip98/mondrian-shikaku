@@ -294,7 +294,7 @@ export default function Home() {
             </div>
           ))}
         </div>
-        <div className="border-t-[3px] border-[var(--color-border)] py-4 text-center" style={{ fontFamily: 'var(--font-body)', fontWeight: 300, fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
+        <div className="border-t-[3px] border-[var(--color-border)] py-4 text-center" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: 'var(--text-xs)', color: 'var(--color-text-muted)' }}>
           © MONDRIAN SHIKAKU
         </div>
       </footer>

@@ -299,7 +299,7 @@ export default function Stats() {
               { label: 'Total Time', value: formatTime(totalTime) },
             ].map(stat => (
               <div key={stat.label} className="border-2 border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-                <span className="block" style={{ fontFamily: 'var(--font-body)', fontWeight: 400, fontSize: 'var(--text-xs)',
+                <span className="block" style={{ fontFamily: 'var(--font-body)', fontWeight: 500, fontSize: 'var(--text-xs)',
                   color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
                   {stat.label}
                 </span>

@@ -64,7 +64,7 @@ function StatCard({ label, value, accent }: { label: string; value: number; acce
       <h3
         style={{
           fontFamily: 'var(--font-body)',
-          fontWeight: 400,
+          fontWeight: 500,
           fontSize: 'var(--text-xs)',
           color: 'var(--color-text-muted)',
           textTransform: 'uppercase',
@@ -329,7 +329,7 @@ export default function Profile() {
           <span
             style={{
               fontFamily: 'var(--font-body)',
-              fontWeight: 400,
+              fontWeight: 500,
               fontSize: 'var(--text-xs)',
               color: 'var(--color-text-muted)',
               textTransform: 'uppercase',

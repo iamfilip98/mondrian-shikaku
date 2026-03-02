@@ -246,12 +246,16 @@ export default function GamePage({
   useEffect(() => {
     const cleanupPointer = (e: PointerEvent) => {
       activePointersRef.current.delete(e.pointerId);
-      if (activePointersRef.current.size === 0 && isPinchingRef.current) {
-        pinchCooldownRef.current = true;
-        setTimeout(() => {
-          isPinchingRef.current = false;
-          pinchCooldownRef.current = false;
-        }, 50);
+      if (activePointersRef.current.size === 0) {
+        if (isPinchingRef.current) {
+          pinchCooldownRef.current = true;
+          setTimeout(() => {
+            isPinchingRef.current = false;
+            pinchCooldownRef.current = false;
+          }, 50);
+        }
+        // Clear stale interaction state when pointer released outside the board
+        cancelInteraction();
       }
     };
     const handlePointerCancel = (e: PointerEvent) => {
@@ -556,6 +560,7 @@ export default function GamePage({
           hintsRemaining={gameState.hintsRemaining}
           onHint={handleHint}
           onSettings={() => setSettingsOpen(true)}
+          isComplete={gameState.isComplete}
         />
       </div>
 
@@ -567,6 +572,7 @@ export default function GamePage({
           maxScale={Math.max(3, Math.ceil(28 / cellSize))}
           centerOnInit={true}
           limitToBounds={true}
+          panning={{ disabled: true }}
           doubleClick={{ disabled: true }}
           onPinchingStart={() => {
             isPinchingRef.current = true;
