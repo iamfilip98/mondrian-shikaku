@@ -53,7 +53,7 @@ export default function Nav() {
             className="hidden md:inline"
             style={{
               fontFamily: 'var(--font-body)',
-              fontWeight: 300,
+              fontWeight: 400,
               fontSize: 'var(--text-sm)',
               letterSpacing: '0.05em',
               color: 'var(--color-text)',
@@ -78,7 +78,7 @@ export default function Nav() {
                 aria-current={isActive ? 'page' : undefined}
                 style={{
                   fontFamily: 'var(--font-body)',
-                  fontWeight: isActive ? 500 : 400,
+                  fontWeight: 500,
                   fontSize: 'var(--text-sm)',
                   color: isActive ? 'var(--color-text-inverse)' : 'var(--color-text)',
                 }}
@@ -136,7 +136,7 @@ export default function Nav() {
                 className="flex items-center justify-center h-full px-4 border-l-[3px] border-[var(--color-border)] cursor-pointer"
                 style={{
                   fontFamily: 'var(--font-body)',
-                  fontWeight: 400,
+                  fontWeight: 500,
                   fontSize: 'var(--text-sm)',
                   color: 'var(--color-text-muted)',
                   background: 'none',
@@ -210,7 +210,7 @@ export default function Nav() {
                   style={{
                     height: '48px',
                     fontFamily: 'var(--font-body)',
-                    fontWeight: isActive ? 500 : 400,
+                    fontWeight: 500,
                     fontSize: 'var(--text-sm)',
                     color: 'var(--color-text)',
                     backgroundColor: isActive ? 'var(--color-red)' : 'transparent',
@@ -252,7 +252,7 @@ export default function Nav() {
                     style={{
                       height: '48px',
                       fontFamily: 'var(--font-body)',
-                      fontWeight: 400,
+                      fontWeight: 500,
                       fontSize: 'var(--text-sm)',
                       color: 'var(--color-text-muted)',
                       background: 'none',
