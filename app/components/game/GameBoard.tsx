@@ -229,8 +229,8 @@ export default memo(function GameBoard({
                 fontFamily: 'var(--font-display)',
                 fontWeight: 700,
                 fontSize: `${Math.max(5, cellSize * 0.5)}px`,
-                fill: 'var(--color-text)',
-                opacity: 0.9,
+                fill: '#5BA3E6',
+                opacity: 1,
                 userSelect: 'none',
               }}
             >

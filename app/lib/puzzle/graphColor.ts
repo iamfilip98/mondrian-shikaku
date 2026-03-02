@@ -166,6 +166,24 @@ export function colorSingleRect(
   return candidates.length > 0 ? candidates[0] : unlockedColors[0];
 }
 
+/**
+ * Pre-compute a stable color map for the puzzle solution.
+ * Returns a Map keyed by "row-col-width-height" → color string.
+ * Correct rects always get the same color regardless of placement order.
+ */
+export function computeSolutionColors(
+  solutionRects: GridRect[],
+  unlockedColors: string[]
+): Map<string, string> {
+  const colorMap = assignColors(solutionRects, unlockedColors);
+  const result = new Map<string, string>();
+  solutionRects.forEach((rect, i) => {
+    const key = `${rect.row}-${rect.col}-${rect.width}-${rect.height}`;
+    result.set(key, colorMap.get(i) || unlockedColors[0]);
+  });
+  return result;
+}
+
 export function getUnlockedColors(): string[] {
   return [...MONDRIAN_COLORS];
 }

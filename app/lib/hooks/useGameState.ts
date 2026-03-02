@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { setSettingItem } from '~/lib/utils/settingStorage';
 import type { Puzzle, GridRect, PlacedRect } from '~/lib/puzzle/types';
-import { assignColors, colorSingleRect, getUnlockedColors } from '~/lib/puzzle/graphColor';
+import { colorSingleRect, getUnlockedColors, computeSolutionColors } from '~/lib/puzzle/graphColor';
 import { validateRect, rectsOverlap, checkComplete } from '~/lib/puzzle/gameLogic';
 
 export type { PlacedRect } from '~/lib/puzzle/types';
@@ -99,6 +99,12 @@ export function useGameState(puzzle: Puzzle, blindMode = false, puzzleSeed?: str
 
   const unlockedColors = getUnlockedColors();
 
+  // Pre-compute stable colors for the solution so correct rects never change color
+  const solutionColorMap = useMemo(
+    () => computeSolutionColors(puzzle.solution, unlockedColors),
+    [puzzle.solution, unlockedColors]
+  );
+
   // Wall-clock timer: uses Date.now() instead of setInterval counting
   useEffect(() => {
     if (isComplete) {
@@ -160,32 +166,25 @@ export function useGameState(puzzle: Puzzle, blindMode = false, puzzleSeed?: str
     (rects: PlacedRect[]): PlacedRect[] => {
       if (rects.length === 0) return rects;
 
-      // Graph-color correct rects; in blind mode, all rects get colored
-      // but wrong ones get a neutral color so the player can't tell
-      const coloredIndices: number[] = [];
-      const coloredGridRects: GridRect[] = [];
-      rects.forEach((r, i) => {
-        if ((r._actuallyCorrect ?? r.isCorrect) || blindMode) {
-          coloredIndices.push(i);
-          coloredGridRects.push({ row: r.row, col: r.col, width: r.width, height: r.height });
-        }
-      });
+      // Use pre-computed solution colors for correct rects (stable, never changes).
+      // For incorrect rects, use dynamic coloring relative to neighbors.
+      return rects.map((r) => {
+        const isActuallyCorrect = r._actuallyCorrect ?? r.isCorrect;
 
-      const colorMap = assignColors(coloredGridRects, unlockedColors);
-
-      return rects.map((r, i) => {
-        const idx = coloredIndices.indexOf(i);
-        if (idx !== -1) {
-          if (blindMode && !(r._actuallyCorrect ?? r.isCorrect)) {
-            // Wrong rect in blind mode: use neutral color so it looks the same
+        if (isActuallyCorrect || blindMode) {
+          if (blindMode && !isActuallyCorrect) {
             return { ...r, color: 'var(--color-surface-2)' };
           }
-          return { ...r, color: colorMap.get(idx) || unlockedColors[0] };
+          const key = `${r.row}-${r.col}-${r.width}-${r.height}`;
+          const solutionColor = solutionColorMap.get(key);
+          if (solutionColor) return { ...r, color: solutionColor };
+          // Fallback for correct rects not in solution map (shouldn't happen)
+          return { ...r, color: unlockedColors[0] };
         }
         return { ...r, color: 'var(--color-wrong)' };
       });
     },
-    [unlockedColors, blindMode]
+    [unlockedColors, blindMode, solutionColorMap]
   );
 
   // Push to history with cap at 100 entries
@@ -218,27 +217,38 @@ export function useGameState(puzzle: Puzzle, blindMode = false, puzzleSeed?: str
       // Store actual correctness for win detection in blind mode
       newRect._actuallyCorrect = isCorrect;
 
-      // Optimize: if no overlapping rects were removed, assign color to just the new rect
-      let newPlaced: PlacedRect[];
-      if (removedOverlaps === 0 && nonOverlapping.length > 0) {
-        const shouldColor = (newRect._actuallyCorrect ?? newRect.isCorrect) || blindMode;
-        if (shouldColor) {
-          const existingGridRects = nonOverlapping
-            .filter((r) => (r._actuallyCorrect ?? r.isCorrect) || blindMode)
-            .map((r) => ({ row: r.row, col: r.col, width: r.width, height: r.height }));
-          const existingColors = nonOverlapping
-            .filter((r) => (r._actuallyCorrect ?? r.isCorrect) || blindMode)
-            .map((r) => r.color);
-          const gridRect = { row: rect.row, col: rect.col, width: rect.width, height: rect.height };
-
-          if (blindMode && !(newRect._actuallyCorrect ?? newRect.isCorrect)) {
-            newRect.color = 'var(--color-surface-2)';
-          } else {
-            newRect.color = colorSingleRect(gridRect, existingGridRects, existingColors, unlockedColors);
-          }
+      // Assign color to the new rect
+      const isActuallyCorrect = newRect._actuallyCorrect ?? newRect.isCorrect;
+      if (isActuallyCorrect || blindMode) {
+        if (blindMode && !isActuallyCorrect) {
+          newRect.color = 'var(--color-surface-2)';
         } else {
-          newRect.color = 'var(--color-wrong)';
+          // Use pre-computed solution color for correct rects
+          const key = `${rect.row}-${rect.col}-${rect.width}-${rect.height}`;
+          const solutionColor = solutionColorMap.get(key);
+          if (solutionColor) {
+            newRect.color = solutionColor;
+          } else {
+            // Fallback: dynamic color for rects not matching any solution rect
+            const existingGridRects = nonOverlapping
+              .filter((r) => (r._actuallyCorrect ?? r.isCorrect) || blindMode)
+              .map((r) => ({ row: r.row, col: r.col, width: r.width, height: r.height }));
+            const existingColors = nonOverlapping
+              .filter((r) => (r._actuallyCorrect ?? r.isCorrect) || blindMode)
+              .map((r) => r.color);
+            newRect.color = colorSingleRect(
+              { row: rect.row, col: rect.col, width: rect.width, height: rect.height },
+              existingGridRects, existingColors, unlockedColors
+            );
+          }
         }
+      } else {
+        newRect.color = 'var(--color-wrong)';
+      }
+
+      // Recolor only when overlaps were removed (existing correct rects keep their solution colors)
+      let newPlaced: PlacedRect[];
+      if (removedOverlaps === 0) {
         newPlaced = [...nonOverlapping, newRect];
       } else {
         newPlaced = recolorAll([...nonOverlapping, newRect]);
@@ -262,7 +272,7 @@ export function useGameState(puzzle: Puzzle, blindMode = false, puzzleSeed?: str
 
       return newRect;
     },
-    [placed, puzzle, pushHistory, recolorAll, blindMode]
+    [placed, puzzle, pushHistory, recolorAll, blindMode, solutionColorMap, unlockedColors]
   );
 
   const removeRect = useCallback(

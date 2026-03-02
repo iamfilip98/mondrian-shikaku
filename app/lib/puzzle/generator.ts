@@ -19,7 +19,10 @@ function partition(
   const area = region.width * region.height;
 
   // Base case: region meets minArea and is within maxArea — random chance to stop splitting
-  if (area <= config.maxArea && area >= config.minArea && rng() > config.splitProbability) {
+  // But reject very elongated shapes (aspect ratio > 5:1) — force further splitting
+  const aspectRatio = Math.max(region.width, region.height) / Math.min(region.width, region.height);
+  const tooElongated = aspectRatio > 5 && area >= config.minArea * 2;
+  if (area <= config.maxArea && area >= config.minArea && !tooElongated && rng() > config.splitProbability) {
     return [region];
   }
 
@@ -244,6 +247,23 @@ export function generatePuzzle(config: PuzzleConfig): Puzzle {
     if (totalArea !== width * height) {
       attempts++;
       continue;
+    }
+
+    // Variety check: reject if too many rects share the same dimensions
+    // (e.g., three 10×1 lines is boring). Skip for large grids (perf).
+    if (!isLargeGrid) {
+      const shapeCounts = new Map<string, number>();
+      for (const r of rects) {
+        // Normalize: 2×5 and 5×2 are the same shape
+        const key = `${Math.min(r.width, r.height)}x${Math.max(r.width, r.height)}`;
+        shapeCounts.set(key, (shapeCounts.get(key) || 0) + 1);
+      }
+      const maxDupes = Math.max(2, Math.floor(rects.length * 0.25));
+      const hasTooManyDupes = [...shapeCounts.values()].some((count) => count > maxDupes);
+      if (hasTooManyDupes && attempts < maxAttempts - 1) {
+        attempts++;
+        continue;
+      }
     }
 
     // Step 2: Place clues
