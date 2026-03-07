@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mondrian-shikaku-v1';
+const CACHE_NAME = 'mondrian-shikaku-v2';
 
 // Cache-first for static assets
 const CACHE_FIRST_PATTERNS = [
@@ -8,10 +8,12 @@ const CACHE_FIRST_PATTERNS = [
   /fonts\.gstatic\.com/,
 ];
 
-// Network-first for API and HTML
+// Network-first for API, HTML, and React Router data requests
 const NETWORK_FIRST_PATTERNS = [
   /\/api\//,
   /\.html$/,
+  /[?&]_data=/,
+  /\.data$/,
 ];
 
 self.addEventListener('install', (event) => {
@@ -53,8 +55,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first for API and navigation
-  if (NETWORK_FIRST_PATTERNS.some((pattern) => pattern.test(url.pathname)) || event.request.mode === 'navigate') {
+  // Network-first for API, data requests, and navigation
+  if (NETWORK_FIRST_PATTERNS.some((pattern) => pattern.test(url.pathname) || pattern.test(url.href)) || event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
